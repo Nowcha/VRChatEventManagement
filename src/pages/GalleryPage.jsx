@@ -91,7 +91,7 @@ export default function GalleryPage() {
         if (!ev) return '不明'
         const d = ev.date
         if (!d) return '不明'
-        return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, '0')}月${String(d.getDate()).padStart(2, '0')}日 ${ev.timeSlot || ''}回`
+        return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, '0')}月${String(d.getDate()).padStart(2, '0')}日 ${ev.timeSlot || ''}`
     }
 
     const formatDate = (date) => {

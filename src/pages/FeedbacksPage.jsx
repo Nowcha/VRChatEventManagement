@@ -137,14 +137,14 @@ export default function FeedbacksPage() {
         if (!ev) return '不明'
         const d = ev.date
         if (!d) return '不明'
-        return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, '0')}月${String(d.getDate()).padStart(2, '0')}日 ${ev.timeSlot || ''}回`
+        return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, '0')}月${String(d.getDate()).padStart(2, '0')}日 ${ev.timeSlot || ''}`
     }
     const getEventDateFormatted = (id) => {
         const ev = events.find(e => e.id === id)
         if (!ev) return '不明'
         const d = ev.date
         if (!d) return '不明'
-        return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} ${ev.timeSlot || ''}回`
+        return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} ${ev.timeSlot || ''}`
     }
 
     const filteredFeedbacks = feedbacks.filter(fb => {

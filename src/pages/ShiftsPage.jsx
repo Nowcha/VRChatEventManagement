@@ -528,7 +528,7 @@ export default function ShiftsPage() {
                                                             </span>
                                                         </td>
                                                         <td>
-                                                            <span className="badge badge-confirmed">{ev.timeSlot}回</span>
+                                                            <span className="badge badge-confirmed">{ev.timeSlot}</span>
                                                         </td>
                                                         {allUsers.map(u => {
                                                             const vote = shifts.find(s => s.eventId === ev.id && s.userId === u.id)
