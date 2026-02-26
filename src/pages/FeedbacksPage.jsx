@@ -185,7 +185,7 @@ export default function FeedbacksPage() {
     const handleCopy = (fb, e) => {
         e.stopPropagation()
         const customerNames = getCustomerNames(fb.customerIds, fb.customerId)
-        const textToCopy = `お客様: ${customerNames}\n${fb.content || ''}`
+        const textToCopy = `${customerNames}\n${fb.content || ''}`
         navigator.clipboard.writeText(textToCopy)
             .then(() => alert('お客様の名前と感想をコピーしました。'))
             .catch(err => console.error('コピー失敗:', err))
