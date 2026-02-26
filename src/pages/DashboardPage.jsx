@@ -120,7 +120,7 @@ export default function DashboardPage() {
                     </div>
                     {nextEvent && (
                         <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-light)', fontSize: '0.85rem' }}>
-                            <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>次: {nextEvent.title}</div>
+                            <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>次回: {nextEvent.title}</div>
                             <div style={{ color: 'var(--text-tertiary)' }}>{formatDate(nextEvent.date)} {formatTime(nextEvent.date)}</div>
                         </div>
                     )}
