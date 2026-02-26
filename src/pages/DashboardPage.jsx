@@ -141,11 +141,7 @@ export default function DashboardPage() {
                             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                                 {formatDate(nextEvent.date)} {formatTime(nextEvent.date)}
                             </p>
-                            {nextEvent.timeSlot && (
-                                <span className="badge badge-confirmed" style={{ marginTop: '8px' }}>
-                                    {nextEvent.timeSlot}回
-                                </span>
-                            )}
+
                             {nextEvent.memo && (
                                 <p className="text-sm mt-md" style={{ color: 'var(--text-tertiary)' }}>
                                     {nextEvent.memo}
