@@ -106,22 +106,47 @@ export default function DashboardPage() {
             {/* 統計カード */}
             <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-icon">📅</div>
+                    <div className="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                    </div>
                     <div className="stat-value">{stats.upcomingEvents}</div>
                     <div className="stat-label">今後のイベント</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon">👥</div>
+                    <div className="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </div>
                     <div className="stat-value">{stats.totalCustomers}</div>
                     <div className="stat-label">登録顧客数</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon">✏️</div>
+                    <div className="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                    </div>
                     <div className="stat-value">{stats.pendingFeedbacks}</div>
                     <div className="stat-label">未入力の感想</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon">📷</div>
+                    <div className="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                    </div>
                     <div className="stat-value">{stats.totalPhotos}</div>
                     <div className="stat-label">ギャラリー写真</div>
                 </div>
