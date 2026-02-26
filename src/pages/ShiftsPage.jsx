@@ -403,8 +403,8 @@ export default function ShiftsPage() {
                                 value={proposeTimeSlot}
                                 onChange={e => setProposeTimeSlot(e.target.value)}
                             >
-                                <option value="21:00">21:00回</option>
-                                <option value="24:00">24:00回</option>
+                                <option value="21:00">21:00</option>
+                                <option value="24:00">24:00</option>
                             </select>
                         </div>
 
@@ -640,8 +640,8 @@ export default function ShiftsPage() {
                                     value={editTimeSlot}
                                     onChange={e => setEditTimeSlot(e.target.value)}
                                 >
-                                    <option value="21:00">21:00回</option>
-                                    <option value="24:00">24:00回</option>
+                                    <option value="21:00">21:00</option>
+                                    <option value="24:00">24:00</option>
                                 </select>
                             </div>
 
