@@ -139,6 +139,13 @@ export default function FeedbacksPage() {
         if (!d) return '不明'
         return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, '0')}月${String(d.getDate()).padStart(2, '0')}日 ${ev.timeSlot || ''}回`
     }
+    const getEventDateFormatted = (id) => {
+        const ev = events.find(e => e.id === id)
+        if (!ev) return '不明'
+        const d = ev.date
+        if (!d) return '不明'
+        return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} ${ev.timeSlot || ''}回`
+    }
 
     const filteredFeedbacks = feedbacks.filter(fb => {
         const matchStatus = statusFilter === 'all' || fb.status === statusFilter
@@ -299,53 +306,71 @@ export default function FeedbacksPage() {
                     </div>
 
                     {filteredFeedbacks.map(fb => (
-                        <div key={fb.id} className="card" style={{ display: 'flex', alignItems: 'stretch' }}>
-                            <div style={{ padding: '20px 16px', display: 'flex', alignItems: 'center' }}>
+                        <div key={fb.id} className="card" style={{ display: 'flex', alignItems: 'center', padding: '24px', gap: '32px' }}>
+                            {/* Checkbox */}
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <input
                                     type="checkbox"
                                     checked={selectedFeedbackIds.includes(fb.id)}
                                     onChange={() => toggleSelection(fb.id)}
-                                    style={{ accentColor: 'var(--accent-pink)', width: '18px', height: '18px', cursor: 'pointer' }}
+                                    style={{ accentColor: 'var(--accent-pink)', width: '22px', height: '22px', cursor: 'pointer' }}
                                 />
                             </div>
-                            <div style={{ flex: 1, padding: '16px', paddingLeft: 0, cursor: 'pointer', display: 'flex', gap: '24px' }} onClick={() => openEditModal(fb)}>
-                                <div style={{ flex: '0 0 300px' }}>
-                                    <div className="flex items-center justify-between mb-md">
-                                        <div className="flex items-center gap-md">
-                                            <span style={{ fontWeight: 'var(--font-weight-medium)' }}>
+
+                            {/* Main Content Area */}
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', cursor: 'pointer' }} onClick={() => openEditModal(fb)}>
+
+                                {/* Top Row: Date */}
+                                <div style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
+                                    日付 ({getEventDateFormatted(fb.eventId)})
+                                </div>
+
+                                {/* Bottom Row: 3 columns */}
+                                <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+
+                                    {/* Column 1: Customer, Cast, Status */}
+                                    <div style={{ flex: '0 0 320px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', width: '120px' }}>お客さま名：</span>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
                                                 {getCustomerNames(fb.customerIds, fb.customerId)}
                                             </span>
-                                            {getStatusBadge(fb.status)}
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', width: '120px' }}>担当：</span>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
+                                                {getCastName(fb.assignedCastId)}
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', width: '120px' }}>ステータス：</span>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
+                                                {{ unwritten: '未入力', written: '入力済み', posted: '投稿済み' }[fb.status] || '未入力'}
+                                            </span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-sm mb-md">
-                                        <span className="text-xs text-muted">担当:</span>
-                                        <span className="badge badge-cast">{getCastName(fb.assignedCastId)}</span>
-                                    </div>
-                                    <div className="flex items-center gap-sm mt-lg">
-                                        <span className="text-xs text-muted">
-                                            {getEventTitle(fb.eventId)}
-                                            {fb.createdAt && ` • ${formatDate(fb.createdAt)}`}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-                                        <button
-                                            className="btn btn-sm btn-ghost"
-                                            onClick={(e) => handleCopy(fb, e)}
-                                            style={{ padding: '4px 8px', fontSize: '0.8rem', border: '1px solid var(--border-subtle)' }}
-                                            title="名前と感想をコピー"
-                                        >
-                                            📄 コピー
-                                        </button>
-                                    </div>
-                                    {fb.content && (
-                                        <div className="text-sm" style={{ flex: 1, color: 'var(--text-secondary)', lineHeight: '1.6', whiteSpace: 'pre-wrap', background: 'var(--surface-sunken)', padding: '12px', borderRadius: '4px' }}>
-                                            {fb.content}
+
+                                    {/* Column 2: Feedback Content */}
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '24px' }}>
+                                        <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>感想</span>
+                                        <div style={{ fontSize: '1rem', color: 'var(--text-primary)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                                            {fb.content || ''}
                                         </div>
-                                    )}
+                                    </div>
+
                                 </div>
+                            </div>
+
+                            {/* Right End: Copy Button */}
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <button
+                                    className="btn btn-ghost"
+                                    onClick={(e) => handleCopy(fb, e)}
+                                    style={{ padding: '8px', fontSize: '1rem', color: 'var(--text-secondary)' }}
+                                    title="名前と感想をコピー"
+                                >
+                                    コピー
+                                </button>
                             </div>
                         </div>
                     ))}
