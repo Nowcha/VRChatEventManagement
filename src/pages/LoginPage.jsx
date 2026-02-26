@@ -36,12 +36,12 @@ export default function LoginPage() {
 
                 {error && (
                     <div style={{
-                        background: 'rgba(214, 48, 49, 0.1)',
-                        border: '1px solid rgba(214, 48, 49, 0.3)',
+                        background: 'var(--bg-tertiary)',
+                        border: '1px solid var(--border-subtle)',
                         borderRadius: 'var(--radius-sm)',
                         padding: '12px 16px',
                         marginBottom: '24px',
-                        color: '#ff6b6b',
+                        color: 'var(--color-dark-gray)',
                         fontSize: '0.85rem'
                     }}>
                         {error}
@@ -76,17 +76,17 @@ export default function LoginPage() {
 
                 {!isFirebaseConfigured && (
                     <div style={{
-                        background: 'rgba(240, 165, 0, 0.1)',
-                        border: '1px solid rgba(240, 165, 0, 0.3)',
+                        background: 'var(--bg-tertiary)',
+                        border: '1px solid var(--border-subtle)',
                         borderRadius: 'var(--radius-sm)',
                         padding: '12px 16px',
                         marginBottom: '16px',
                         textAlign: 'left'
                     }}>
-                        <p style={{ color: '#ffd166', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>
+                        <p style={{ color: 'var(--color-dark-gray)', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>
                             ⚠ Firebase 未設定
                         </p>
-                        <p style={{ color: 'rgba(240, 238, 246, 0.45)', fontSize: '0.75rem', lineHeight: '1.6' }}>
+                        <p style={{ color: 'var(--color-dark-gray)', fontSize: '0.75rem', lineHeight: '1.6' }}>
                             .env ファイルを作成し、Firebase の設定値を入力してください。
                             テンプレートは .env.example を参照してください。
                         </p>

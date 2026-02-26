@@ -5,41 +5,47 @@
 
 /* ---------- CSS Custom Properties ---------- */
 :root {
-  /* Colors - Night Sky Theme */
-  --bg-primary: #050510;
-  --bg-secondary: #0a0a1a;
-  --bg-tertiary: #101030;
-  --bg-card: rgba(16, 16, 48, 0.6);
-  --bg-glass: rgba(255, 255, 255, 0.04);
-  --bg-glass-hover: rgba(255, 255, 255, 0.08);
-  --bg-glass-active: rgba(255, 255, 255, 0.12);
+  /* Colors - Light Theme */
+  --color-black: #1A1A1A;
+  --color-white: #FFFFFF;
+  --color-yellow: #FFF9C4;
+  --color-light-gray: #D9D9D9;
+  --color-dark-gray: #7A7A71;
+
+  --bg-primary: #F8F9FA;
+  --bg-secondary: var(--color-white);
+  --bg-tertiary: #F1F3F5;
+  --bg-card: var(--color-white);
+  --bg-glass: rgba(0, 0, 0, 0.02);
+  --bg-glass-hover: rgba(0, 0, 0, 0.04);
+  --bg-glass-active: rgba(0, 0, 0, 0.08);
 
   /* Accent Colors */
-  --accent-pink: #e84393;
-  --accent-pink-light: #fd79a8;
-  --accent-pink-glow: rgba(232, 67, 147, 0.3);
-  --accent-gold: #f0a500;
-  --accent-gold-light: #ffd166;
-  --accent-blue: #6c5ce7;
-  --accent-blue-light: #a29bfe;
-  --accent-cyan: #00cec9;
+  --accent-pink: var(--color-black);
+  --accent-pink-light: #333333;
+  --accent-pink-glow: transparent;
+  --accent-gold: var(--color-yellow);
+  --accent-gold-light: #FFFCDB;
+  --accent-blue: var(--color-dark-gray);
+  --accent-blue-light: #8E8E85;
+  --accent-cyan: var(--color-light-gray);
 
   /* Text Colors */
-  --text-primary: #f0eef6;
-  --text-secondary: rgba(240, 238, 246, 0.7);
-  --text-tertiary: rgba(240, 238, 246, 0.45);
-  --text-accent: var(--accent-pink-light);
+  --text-primary: var(--color-black);
+  --text-secondary: var(--color-dark-gray);
+  --text-tertiary: #A5A5A5;
+  --text-accent: var(--color-black);
 
   /* Border */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-light: rgba(255, 255, 255, 0.1);
-  --border-accent: rgba(232, 67, 147, 0.3);
+  --border-subtle: var(--color-light-gray);
+  --border-light: rgba(0, 0, 0, 0.08);
+  --border-accent: var(--color-dark-gray);
 
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px var(--accent-pink-glow);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.1);
+  --shadow-glow: none;
 
   /* Typography */
   --font-serif: 'Noto Serif JP', serif;
@@ -102,15 +108,7 @@ body {
 }
 
 body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(232, 67, 147, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 100%, rgba(0, 206, 201, 0.04) 0%, transparent 40%);
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 
 #root {
@@ -128,16 +126,29 @@ a:hover {
   color: var(--accent-pink);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-serif);
   font-weight: var(--font-weight-medium);
   line-height: 1.3;
   color: var(--text-primary);
 }
 
-h1 { font-size: 2rem; }
-h2 { font-size: 1.5rem; }
-h3 { font-size: 1.25rem; }
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
 
 /* ---------- Layout ---------- */
 .app-layout {
@@ -578,21 +589,21 @@ tr:hover {
 }
 
 .badge-unwritten {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-tertiary);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
 }
 
 .badge-written {
-  background: rgba(108, 92, 231, 0.15);
-  color: var(--accent-blue-light);
-  border: 1px solid rgba(108, 92, 231, 0.25);
+  background: var(--color-yellow);
+  color: var(--color-black);
+  border: 1px solid var(--border-subtle);
 }
 
 .badge-posted {
-  background: rgba(0, 206, 201, 0.15);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(0, 206, 201, 0.25);
+  background: var(--color-light-gray);
+  color: var(--color-black);
+  border: 1px solid var(--border-accent);
 }
 
 .tag {
@@ -1020,12 +1031,12 @@ tr:hover {
 }
 
 .btn-oauth-x {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.05);
   color: var(--text-primary);
 }
 
 .btn-oauth-x:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
   border-color: var(--text-primary);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
@@ -1107,22 +1118,69 @@ tr:hover {
 }
 
 /* ---------- Utility ---------- */
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.gap-sm { gap: var(--space-sm); }
-.gap-md { gap: var(--space-md); }
-.gap-lg { gap: var(--space-lg); }
-.mt-md { margin-top: var(--space-md); }
-.mt-lg { margin-top: var(--space-lg); }
-.mb-md { margin-bottom: var(--space-md); }
-.mb-lg { margin-bottom: var(--space-lg); }
-.text-center { text-align: center; }
-.text-sm { font-size: 0.85rem; }
-.text-xs { font-size: 0.75rem; }
-.text-muted { color: var(--text-tertiary); }
-.w-full { width: 100%; }
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-sm {
+  gap: var(--space-sm);
+}
+
+.gap-md {
+  gap: var(--space-md);
+}
+
+.gap-lg {
+  gap: var(--space-lg);
+}
+
+.mt-md {
+  margin-top: var(--space-md);
+}
+
+.mt-lg {
+  margin-top: var(--space-lg);
+}
+
+.mb-md {
+  margin-bottom: var(--space-md);
+}
+
+.mb-lg {
+  margin-bottom: var(--space-lg);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-sm {
+  font-size: 0.85rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.text-muted {
+  color: var(--text-tertiary);
+}
+
+.w-full {
+  width: 100%;
+}
 
 .grid-2 {
   display: grid;
@@ -1138,8 +1196,13 @@ tr:hover {
 
 /* ---------- Animations ---------- */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -1147,6 +1210,7 @@ tr:hover {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1158,6 +1222,7 @@ tr:hover {
     opacity: 0;
     transform: translateX(40px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -1165,7 +1230,9 @@ tr:hover {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .fade-in {

@@ -71,7 +71,7 @@ export default function SettingsPage() {
                     padding: '12px 20px'
                 }}>
                     <p className="text-sm" style={{
-                        color: message.includes('失敗') ? '#ff6b6b' : 'var(--accent-cyan)'
+                        color: 'var(--color-dark-gray)'
                     }}>
                         {message}
                     </p>
@@ -130,9 +130,9 @@ export default function SettingsPage() {
             </div>
 
             {/* アカウント削除 */}
-            <div className="card" style={{ borderColor: 'rgba(214, 48, 49, 0.2)' }}>
+            <div className="card" style={{ borderColor: 'var(--border-subtle)' }}>
                 <div className="card-header">
-                    <h3 className="card-title" style={{ color: '#ff6b6b' }}>危険な操作</h3>
+                    <h3 className="card-title" style={{ color: 'var(--color-dark-gray)' }}>危険な操作</h3>
                 </div>
                 <p className="text-sm text-muted mb-lg">
                     アカウントを削除すると、すべてのデータが失われます。この操作は取り消せません。

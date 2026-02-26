@@ -558,9 +558,9 @@ export default function ShiftsPage() {
                                                                         <span style={{
                                                                             fontSize: '1.2rem',
                                                                             color: vote?.status === 'available'
-                                                                                ? 'var(--accent-cyan)'
+                                                                                ? 'var(--color-black)'
                                                                                 : vote?.status === 'unavailable'
-                                                                                    ? '#ff6b6b'
+                                                                                    ? 'var(--color-dark-gray)'
                                                                                     : 'var(--text-tertiary)'
                                                                         }}>
                                                                             {vote?.status === 'available' ? '○' : vote?.status === 'unavailable' ? '✕' : '—'}
@@ -572,9 +572,9 @@ export default function ShiftsPage() {
                                                         <td style={{ textAlign: 'center' }}>
                                                             <span style={{
                                                                 color: summary.available === allUsers.length
-                                                                    ? 'var(--accent-cyan)'
+                                                                    ? 'var(--color-black)'
                                                                     : summary.available > 0
-                                                                        ? 'var(--accent-gold-light)'
+                                                                        ? 'var(--color-dark-gray)'
                                                                         : 'var(--text-tertiary)',
                                                                 fontWeight: 'var(--font-weight-medium)',
                                                                 fontFamily: 'var(--font-serif)'
