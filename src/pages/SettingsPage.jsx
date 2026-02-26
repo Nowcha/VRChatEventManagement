@@ -47,7 +47,7 @@ export default function SettingsPage() {
         }
     }
 
-    const inviteUrl = `${window.location.origin}/login`
+    const inviteUrl = 'https://nowcha.github.io/VRChatEventManagement/'
 
     const copyInviteUrl = () => {
         navigator.clipboard.writeText(inviteUrl).then(() => {
