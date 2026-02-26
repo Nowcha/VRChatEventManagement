@@ -322,7 +322,7 @@ export default function FeedbacksPage() {
 
                                 {/* Top Row: Date */}
                                 <div style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
-                                    日付 ({getEventDateFormatted(fb.eventId)})
+                                    {getEventDateFormatted(fb.eventId)}
                                 </div>
 
                                 {/* Bottom Row: 3 columns */}
@@ -331,19 +331,22 @@ export default function FeedbacksPage() {
                                     {/* Column 1: Customer, Cast, Status */}
                                     <div style={{ flex: '0 0 320px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', width: '120px' }}>お客さま名：</span>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', width: '100px', textAlign: 'justify', textAlignLast: 'justify' }}>お客さま</span>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginRight: '16px' }}>：</span>
                                             <span style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
                                                 {getCustomerNames(fb.customerIds, fb.customerId)}
                                             </span>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', width: '120px' }}>担当：</span>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', width: '100px', textAlign: 'justify', textAlignLast: 'justify' }}>担当</span>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginRight: '16px' }}>：</span>
                                             <span style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
                                                 {getCastName(fb.assignedCastId)}
                                             </span>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', width: '120px' }}>ステータス：</span>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', width: '100px', textAlign: 'justify', textAlignLast: 'justify' }}>ステータス</span>
+                                            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginRight: '16px' }}>：</span>
                                             <span style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
                                                 {{ unwritten: '未入力', written: '入力済み', posted: '投稿済み' }[fb.status] || '未入力'}
                                             </span>
