@@ -20,7 +20,7 @@ export default function FeedbacksPage() {
         customerIds: [],
         assignedCastId: '',
         content: '',
-        status: 'written'
+        status: 'unwritten'
     })
     const [loading, setLoading] = useState(true)
 
@@ -70,7 +70,7 @@ export default function FeedbacksPage() {
             customerIds: customers[0] ? [customers[0].id] : [],
             assignedCastId: user.uid,
             content: '',
-            status: 'written'
+            status: 'unwritten'
         })
         setShowModal(true)
     }
@@ -82,7 +82,7 @@ export default function FeedbacksPage() {
             customerIds: fb.customerIds || (fb.customerId ? [fb.customerId] : []),
             assignedCastId: fb.assignedCastId || '',
             content: fb.content || '',
-            status: fb.status || 'written'
+            status: fb.status || 'unwritten'
         })
         setShowModal(true)
     }
