@@ -15,8 +15,7 @@ export default function ShiftsPage() {
     const [activeTab, setActiveTab] = useState('calendar')
 
     // 候補日入力用
-    const [proposeDates, setProposeDates] = useState([])
-    const [proposeTimeSlot, setProposeTimeSlot] = useState('21:00')
+    const [proposeDates, setProposeDates] = useState({})
 
     // イベント詳細モーダル
     const [showEventDetail, setShowEventDetail] = useState(null)
@@ -80,28 +79,52 @@ export default function ShiftsPage() {
     // ============================
     //  ① 候補日一括提案
     // ============================
-    const toggleProposeDate = (dateStr) => {
-        setProposeDates(prev =>
-            prev.includes(dateStr)
-                ? prev.filter(d => d !== dateStr)
-                : [...prev, dateStr]
-        )
+    const toggleProposeTimeSlot = (dateStr, timeSlot) => {
+        setProposeDates(prev => {
+            const currentSlots = prev[dateStr] || []
+            let newSlots
+            if (currentSlots.includes(timeSlot)) {
+                newSlots = currentSlots.filter(t => t !== timeSlot)
+            } else {
+                newSlots = [...currentSlots, timeSlot]
+            }
+
+            const newState = { ...prev }
+            if (newSlots.length === 0) {
+                delete newState[dateStr]
+            } else {
+                newState[dateStr] = newSlots
+            }
+            return newState
+        })
+    }
+
+    const removeProposeDate = (dateStr) => {
+        setProposeDates(prev => {
+            const newState = { ...prev }
+            delete newState[dateStr]
+            return newState
+        })
     }
 
     const handleSubmitCandidates = async () => {
-        if (proposeDates.length === 0) return
+        const dates = Object.keys(proposeDates)
+        if (dates.length === 0) return
         try {
-            for (const dateStr of proposeDates) {
-                const dateTime = new Date(`${dateStr}T${proposeTimeSlot === '24:00' ? '00:00' : proposeTimeSlot}`)
-                await addDoc(collection(db, 'events'), {
-                    date: Timestamp.fromDate(dateTime),
-                    timeSlot: proposeTimeSlot,
-                    memo: '',
-                    status: 'candidate',
-                    createdBy: user.uid
-                })
+            for (const dateStr of dates) {
+                const timeSlots = proposeDates[dateStr]
+                for (const ts of timeSlots) {
+                    const dateTime = new Date(`${dateStr}T${ts === '24:00' ? '00:00' : ts}`)
+                    await addDoc(collection(db, 'events'), {
+                        date: Timestamp.fromDate(dateTime),
+                        timeSlot: ts,
+                        memo: '',
+                        status: 'candidate',
+                        createdBy: user.uid
+                    })
+                }
             }
-            setProposeDates([])
+            setProposeDates({})
             await loadData()
             setActiveTab('vote')
         } catch (error) {
@@ -394,19 +417,6 @@ export default function ShiftsPage() {
                             カレンダーから候補日をクリックして選択してください。複数日を一括で提案できます。
                         </p>
 
-                        {/* 時間帯選択 */}
-                        <div className="form-group">
-                            <label className="form-label">時間帯区分</label>
-                            <select
-                                className="form-select"
-                                style={{ width: 'auto', minWidth: '140px' }}
-                                value={proposeTimeSlot}
-                                onChange={e => setProposeTimeSlot(e.target.value)}
-                            >
-                                <option value="21:00">21:00</option>
-                                <option value="24:00">24:00</option>
-                            </select>
-                        </div>
 
                         {/* 候補日選択用カレンダー */}
                         <div className="calendar" style={{ border: 'none' }}>
@@ -425,7 +435,8 @@ export default function ShiftsPage() {
                                 {Array.from({ length: daysInMonth }).map((_, i) => {
                                     const day = i + 1
                                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-                                    const isSelected = proposeDates.includes(dateStr)
+                                    const selectedSlots = proposeDates[dateStr] || []
+                                    const isSelected = selectedSlots.length > 0
                                     const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day
                                     const isPast = new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate())
 
@@ -433,21 +444,51 @@ export default function ShiftsPage() {
                                         <div
                                             key={day}
                                             className={`calendar-day ${isToday ? 'today' : ''} ${isPast ? 'other-month' : ''}`}
-                                            onClick={() => !isPast && toggleProposeDate(dateStr)}
                                             style={{
-                                                background: isSelected ? 'rgba(232, 67, 147, 0.15)' : undefined,
-                                                borderColor: isSelected ? 'var(--accent-pink)' : undefined,
-                                                cursor: isPast ? 'default' : 'pointer'
+                                                background: isSelected ? 'rgba(232, 67, 147, 0.05)' : undefined,
+                                                cursor: 'default',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                padding: '4px'
                                             }}
                                         >
                                             <div className="calendar-day-number" style={{
                                                 color: isSelected ? 'var(--accent-pink-light)' : undefined,
-                                                fontWeight: isSelected ? '600' : undefined
+                                                fontWeight: isSelected ? '600' : undefined,
+                                                alignSelf: 'flex-start',
+                                                marginBottom: 'auto'
                                             }}>
                                                 {day}
                                             </div>
-                                            {isSelected && (
-                                                <div style={{ fontSize: '0.9rem', textAlign: 'center' }}>✓</div>
+                                            {!isPast && (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%', marginTop: '4px' }}>
+                                                    {['21:00', '24:00'].map(ts => {
+                                                        const isTsSelected = selectedSlots.includes(ts)
+                                                        return (
+                                                            <div
+                                                                key={ts}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    toggleProposeTimeSlot(dateStr, ts)
+                                                                }}
+                                                                style={{
+                                                                    border: `1.5px solid ${isTsSelected ? 'var(--accent-pink)' : 'transparent'}`,
+                                                                    backgroundColor: isTsSelected ? 'rgba(232, 67, 147, 0.1)' : 'var(--bg-secondary)',
+                                                                    color: isTsSelected ? 'var(--accent-pink)' : 'var(--text-tertiary)',
+                                                                    borderRadius: '4px',
+                                                                    padding: '2px 0',
+                                                                    textAlign: 'center',
+                                                                    fontSize: '0.75rem',
+                                                                    fontWeight: isTsSelected ? 'bold' : 'normal',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.2s'
+                                                                }}
+                                                            >
+                                                                {ts}
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
                                             )}
                                         </div>
                                     )
@@ -456,15 +497,15 @@ export default function ShiftsPage() {
                         </div>
 
                         {/* 選択済み候補日の表示 */}
-                        {proposeDates.length > 0 && (
+                        {Object.keys(proposeDates).length > 0 && (
                             <div className="mt-lg">
                                 <p className="text-sm text-muted mb-md">
-                                    選択中の候補日（{proposeDates.length}日）:
+                                    選択中の候補:
                                 </p>
                                 <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
-                                    {proposeDates.sort().map(d => (
-                                        <span key={d} className="tag" style={{ cursor: 'pointer' }} onClick={() => toggleProposeDate(d)}>
-                                            {new Date(d).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', weekday: 'short' })}
+                                    {Object.keys(proposeDates).sort().map(d => (
+                                        <span key={d} className="tag" style={{ cursor: 'pointer' }} onClick={() => removeProposeDate(d)}>
+                                            {new Date(d).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', weekday: 'short' })} ({proposeDates[d].join(', ')})
                                             <span className="tag-remove">✕</span>
                                         </span>
                                     ))}
@@ -476,10 +517,10 @@ export default function ShiftsPage() {
                     <button
                         className="btn btn-primary btn-lg w-full"
                         onClick={handleSubmitCandidates}
-                        disabled={proposeDates.length === 0}
+                        disabled={Object.keys(proposeDates).length === 0}
                     >
-                        {proposeDates.length > 0
-                            ? `${proposeDates.length}日分の候補日を提案する`
+                        {Object.keys(proposeDates).length > 0
+                            ? `候補日を提案する`
                             : '候補日を選択してください'
                         }
                     </button>
