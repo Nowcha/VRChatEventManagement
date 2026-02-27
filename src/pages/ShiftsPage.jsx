@@ -558,7 +558,12 @@ export default function ShiftsPage() {
                                     </thead>
                                     <tbody>
                                         {candidateEvents
-                                            .sort((a, b) => (a.date || 0) - (b.date || 0))
+                                            .sort((a, b) => {
+                                                const dateA = a.date ? new Date(a.date.getFullYear(), a.date.getMonth(), a.date.getDate()).getTime() : 0;
+                                                const dateB = b.date ? new Date(b.date.getFullYear(), b.date.getMonth(), b.date.getDate()).getTime() : 0;
+                                                if (dateA !== dateB) return dateA - dateB;
+                                                return (a.timeSlot || '').localeCompare(b.timeSlot || '');
+                                            })
                                             .map(ev => {
                                                 const summary = getVoteSummary(ev.id)
                                                 return (
@@ -569,7 +574,17 @@ export default function ShiftsPage() {
                                                             </span>
                                                         </td>
                                                         <td>
-                                                            <span className="badge badge-confirmed">{ev.timeSlot}</span>
+                                                            <span style={{
+                                                                border: '1.5px solid var(--accent-pink)',
+                                                                backgroundColor: 'rgba(232, 67, 147, 0.1)',
+                                                                color: 'var(--accent-pink)',
+                                                                borderRadius: '4px',
+                                                                padding: '4px 16px',
+                                                                textAlign: 'center',
+                                                                fontSize: '0.9rem',
+                                                                fontWeight: 'bold',
+                                                                display: 'inline-block'
+                                                            }}>{ev.timeSlot}</span>
                                                         </td>
                                                         {allUsers.map(u => {
                                                             const vote = shifts.find(s => s.eventId === ev.id && s.userId === u.id)
