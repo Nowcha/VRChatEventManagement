@@ -311,7 +311,6 @@ h3 {
   padding-top: var(--space-2xl);
   padding-bottom: var(--space-md);
   margin-bottom: var(--space-lg);
-  border-bottom: 1px solid var(--border-light);
 }
 
 /* ---------- Page Header ---------- */

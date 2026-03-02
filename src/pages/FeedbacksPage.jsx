@@ -359,12 +359,9 @@ export default function FeedbacksPage() {
                         </div>
                     )}
                 </div>
-            </div>
-
-            {/* 感想一覧 */}
-            {filteredFeedbacks.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div className="flex gap-sm items-center mb-sm" style={{ paddingLeft: '8px' }}>
+                {/* 感想一覧のヘッダー部分(全選択)まで固定 */}
+                {filteredFeedbacks.length > 0 && (
+                    <div className="flex gap-sm items-center mt-md" style={{ paddingLeft: '8px', paddingBottom: '8px' }}>
                         <input
                             type="checkbox"
                             checked={selectedFeedbackIds.length === filteredFeedbacks.length && filteredFeedbacks.length > 0}
@@ -375,6 +372,12 @@ export default function FeedbacksPage() {
                             すべて選択/解除
                         </span>
                     </div>
+                )}
+            </div>
+
+            {/* 感想一覧 */}
+            {filteredFeedbacks.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
                     {filteredFeedbacks.map(fb => (
                         <div key={fb.id} className="card" style={{ display: 'flex', alignItems: 'center', padding: '24px', gap: '32px' }}>
