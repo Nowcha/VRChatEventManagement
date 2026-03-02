@@ -15,8 +15,12 @@ export default function FeedbacksPage() {
     const [castFilter, setCastFilter] = useState('all') // 'all' or cast.id
     const [selectedFeedbackIds, setSelectedFeedbackIds] = useState([])
     const [customerSearchText, setCustomerSearchText] = useState('')
+    const [isManualEvent, setIsManualEvent] = useState(false)
     const [formData, setFormData] = useState({
         eventId: '',
+        eventManualInput: '',
+        manualDate: '',
+        manualTimeSlot: '21:00',
         customerIds: [],
         assignedCastId: '',
         content: '',
@@ -38,7 +42,6 @@ export default function FeedbacksPage() {
                 ...d.data(),
                 date: d.data().date?.toDate()
             }))
-            setEvents(eventsList)
             setEvents(eventsList)
 
             // 顧客
@@ -63,10 +66,16 @@ export default function FeedbacksPage() {
         }
     }
 
+    const confirmedEvents = events.filter(e => e.status === 'confirmed')
+
     const openCreateModal = () => {
         setEditingFeedback(null)
+        setIsManualEvent(false)
         setFormData({
-            eventId: events[0]?.id || '',
+            eventId: confirmedEvents[0]?.id || '',
+            eventManualInput: '',
+            manualDate: new Date().toISOString().split('T')[0],
+            manualTimeSlot: '21:00',
             customerIds: customers[0] ? [customers[0].id] : [],
             assignedCastId: user.uid,
             content: '',
@@ -77,8 +86,25 @@ export default function FeedbacksPage() {
 
     const openEditModal = (fb) => {
         setEditingFeedback(fb)
+        const hasManualInput = !fb.eventId && fb.eventManualInput
+        setIsManualEvent(!!hasManualInput)
+
+        // パース処理: "2025年11月17日 21:00" -> manualDate: "2025-11-17", manualTimeSlot: "21:00"
+        let parsedDate = new Date().toISOString().split('T')[0]
+        let parsedTime = '21:00'
+        if (hasManualInput) {
+            const match = fb.eventManualInput.match(/(\d{4})年(\d{2})月(\d{2})日\s+(\d{2}:\d{2})/)
+            if (match) {
+                parsedDate = `${match[1]}-${match[2]}-${match[3]}`
+                parsedTime = match[4]
+            }
+        }
+
         setFormData({
-            eventId: fb.eventId || events[0]?.id || '',
+            eventId: fb.eventId || '',
+            eventManualInput: fb.eventManualInput || '',
+            manualDate: parsedDate,
+            manualTimeSlot: parsedTime,
             customerIds: fb.customerIds || (fb.customerId ? [fb.customerId] : []),
             assignedCastId: fb.assignedCastId || '',
             content: fb.content || '',
@@ -90,8 +116,16 @@ export default function FeedbacksPage() {
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
+            // YYYY-MM-DD -> YYYY年MM月DD日 の形式に変換
+            let constructedManualInput = ''
+            if (isManualEvent && formData.manualDate && formData.manualTimeSlot) {
+                const [y, m, d] = formData.manualDate.split('-')
+                constructedManualInput = `${y}年${m}月${d}日 ${formData.manualTimeSlot}`
+            }
+
             const data = {
-                eventId: formData.eventId,
+                eventId: isManualEvent ? '' : formData.eventId,
+                eventManualInput: isManualEvent ? constructedManualInput : '',
                 customerIds: formData.customerIds,
                 assignedCastId: formData.assignedCastId,
                 content: formData.content,
@@ -132,14 +166,16 @@ export default function FeedbacksPage() {
         return idArray.map(id => customers.find(c => c.id === id)?.vrchatName || '不明').join(', ')
     }
     const getCastName = (id) => allUsers.find(u => u.id === id)?.displayName || '不明'
-    const getEventTitle = (id) => {
+    const getEventTitle = (id, manualInput) => {
+        if (!id && manualInput) return manualInput
         const ev = events.find(e => e.id === id)
         if (!ev) return '不明'
         const d = ev.date
         if (!d) return '不明'
         return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, '0')}月${String(d.getDate()).padStart(2, '0')}日 ${ev.timeSlot || ''}`
     }
-    const getEventDateFormatted = (id) => {
+    const getEventDateFormatted = (id, manualInput) => {
+        if (!id && manualInput) return manualInput
         const ev = events.find(e => e.id === id)
         if (!ev) return '不明'
         const d = ev.date
@@ -184,8 +220,18 @@ export default function FeedbacksPage() {
 
     const handleCopy = (fb, e) => {
         e.stopPropagation()
-        const customerNames = getCustomerNames(fb.customerIds, fb.customerId)
-        const textToCopy = `${customerNames}\n${fb.content || ''}`
+        // お客様名に「さん」をつける
+        const ids = fb.customerIds?.length > 0 ? fb.customerIds : (fb.customerId ? [fb.customerId] : [])
+        let customerNamesFormatted = '不明'
+
+        if (ids.length > 0) {
+            customerNamesFormatted = ids.map(id => {
+                const name = customers.find(c => c.id === id)?.vrchatName || '不明'
+                return `${name}さん`
+            }).join('、')
+        }
+
+        const textToCopy = `${customerNamesFormatted}\n${fb.content || ''}`
         navigator.clipboard.writeText(textToCopy)
             .then(() => alert('お客様の名前と感想をコピーしました。'))
             .catch(err => console.error('コピー失敗:', err))
@@ -322,7 +368,7 @@ export default function FeedbacksPage() {
 
                                 {/* Top Row: Date */}
                                 <div style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
-                                    {getEventDateFormatted(fb.eventId)}
+                                    {getEventDateFormatted(fb.eventId, fb.eventManualInput)}
                                 </div>
 
                                 {/* Bottom Row: 3 columns */}
@@ -402,17 +448,60 @@ export default function FeedbacksPage() {
                             <div className="modal-body">
                                 <div className="form-group">
                                     <label className="form-label">イベント</label>
-                                    <select
-                                        className="form-select"
-                                        value={formData.eventId}
-                                        onChange={e => setFormData({ ...formData, eventId: e.target.value })}
-                                        required
-                                    >
-                                        <option value="">選択してください</option>
-                                        {events.map(ev => (
-                                            <option key={ev.id} value={ev.id}>{getEventTitle(ev.id)}</option>
-                                        ))}
-                                    </select>
+                                    <div className="flex gap-sm mb-sm" style={{ marginTop: '4px' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                            <input
+                                                type="radio"
+                                                checked={!isManualEvent}
+                                                onChange={() => { setIsManualEvent(false); setFormData({ ...formData, eventManualInput: '' }) }}
+                                                style={{ accentColor: 'var(--accent-pink)' }}
+                                            />
+                                            <span className="text-sm">一覧から選択</span>
+                                        </label>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                            <input
+                                                type="radio"
+                                                checked={isManualEvent}
+                                                onChange={() => { setIsManualEvent(true); setFormData({ ...formData, eventId: '' }) }}
+                                                style={{ accentColor: 'var(--accent-pink)' }}
+                                            />
+                                            <span className="text-sm">手入力する</span>
+                                        </label>
+                                    </div>
+                                    {!isManualEvent ? (
+                                        <select
+                                            className="form-select"
+                                            value={formData.eventId}
+                                            onChange={e => setFormData({ ...formData, eventId: e.target.value })}
+                                            required
+                                        >
+                                            <option value="">選択してください</option>
+                                            {confirmedEvents.map(ev => (
+                                                <option key={ev.id} value={ev.id}>{getEventTitle(ev.id)}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <div className="flex gap-sm">
+                                            <input
+                                                type="date"
+                                                className="form-input"
+                                                value={formData.manualDate}
+                                                onChange={e => setFormData({ ...formData, manualDate: e.target.value })}
+                                                required={isManualEvent}
+                                                style={{ flex: 1 }}
+                                            />
+                                            <select
+                                                className="form-select"
+                                                value={formData.manualTimeSlot}
+                                                onChange={e => setFormData({ ...formData, manualTimeSlot: e.target.value })}
+                                                required={isManualEvent}
+                                                style={{ width: '120px' }}
+                                            >
+                                                <option value="21:00">21:00</option>
+                                                <option value="24:00">24:00</option>
+                                            </select>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">対象のお客さま（最大3名まで）</label>
