@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import { collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useLocation } from 'react-router-dom'
 
 export default function ShiftsPage() {
-    const { userData, user } = useAuth()
+    const { user } = useAuth()
+    const location = useLocation()
     const [events, setEvents] = useState([])
     const [shifts, setShifts] = useState([])
     const [allUsers, setAllUsers] = useState([])
@@ -12,7 +14,7 @@ export default function ShiftsPage() {
     const [loading, setLoading] = useState(true)
 
     // タブ管理: 'calendar' | 'propose' | 'vote'
-    const [activeTab, setActiveTab] = useState('calendar')
+    const [activeTab, setActiveTab] = useState(location.state?.tab || 'calendar')
 
     // 候補日入力用
     const [proposeDates, setProposeDates] = useState({})
@@ -472,7 +474,7 @@ export default function ShiftsPage() {
                                                                     toggleProposeTimeSlot(dateStr, ts)
                                                                 }}
                                                                 style={{
-                                                                    border: `1.5px solid ${isTsSelected ? 'var(--accent-pink)' : 'transparent'}`,
+                                                                    border: `1.5px solid ${isTsSelected ? 'var(--accent-pink)' : 'var(--color-black)'}`,
                                                                     backgroundColor: isTsSelected ? 'rgba(232, 67, 147, 0.1)' : 'var(--bg-secondary)',
                                                                     color: isTsSelected ? 'var(--accent-pink)' : 'var(--text-tertiary)',
                                                                     borderRadius: '4px',

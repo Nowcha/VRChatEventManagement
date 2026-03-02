@@ -2,16 +2,20 @@ import { useState, useEffect } from 'react'
 import { collection, query, orderBy, limit, getDocs, where, Timestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 export default function DashboardPage() {
     const { userData } = useAuth()
+    const navigate = useNavigate()
     const [stats, setStats] = useState({
         upcomingEvents: 0,
+        schedulingEvents: 0,
         totalCustomers: 0,
         pendingFeedbacks: 0,
         totalPhotos: 0
     })
     const [nextEvent, setNextEvent] = useState(null)
+    const [pendingByCast, setPendingByCast] = useState([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -23,14 +27,19 @@ export default function DashboardPage() {
             // 統計情報の取得
             const now = Timestamp.now()
 
-            // 今後のイベント数
+            // 今後のイベント数（全件取得してステータスで分類）
             const eventsQuery = query(
                 collection(db, 'events'),
                 where('date', '>=', now),
                 orderBy('date', 'asc')
             )
             const eventsSnapshot = await getDocs(eventsQuery)
-            const upcomingEvents = eventsSnapshot.docs
+            const allUpcoming = eventsSnapshot.docs
+
+            // 確定済みイベント
+            const confirmedEvents = allUpcoming.filter(d => d.data().status === 'confirmed')
+            // 日程調整中（候補）イベント
+            const candidateEvents = allUpcoming.filter(d => d.data().status === 'candidate')
 
             // 顧客数
             const customersSnapshot = await getDocs(collection(db, 'customers'))
@@ -41,22 +50,35 @@ export default function DashboardPage() {
                 where('status', '==', 'unwritten')
             )
             const feedbacksSnapshot = await getDocs(feedbacksQuery)
+            const unwrittenFeedbacks = feedbacksSnapshot.docs.map(d => d.data())
+
+            // ユーザー（キャスト）取得して担当者別集計
+            const usersSnapshot = await getDocs(collection(db, 'users'))
+            const users = usersSnapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+            const breakdown = users
+                .map(u => ({
+                    name: u.displayName || '不明',
+                    count: unwrittenFeedbacks.filter(fb => fb.assignedCastId === u.id).length
+                }))
+                .filter(item => item.count > 0)
+            setPendingByCast(breakdown)
 
             // 写真数
             const photosSnapshot = await getDocs(collection(db, 'photos'))
 
             setStats({
-                upcomingEvents: upcomingEvents.length,
+                upcomingEvents: confirmedEvents.length,
+                schedulingEvents: candidateEvents.length,
                 totalCustomers: customersSnapshot.size,
                 pendingFeedbacks: feedbacksSnapshot.size,
                 totalPhotos: photosSnapshot.size
             })
 
-            // 次のイベント
-            if (upcomingEvents.length > 0) {
-                const eventData = upcomingEvents[0].data()
+            // 次のイベント（確定済みのみ）
+            if (confirmedEvents.length > 0) {
+                const eventData = confirmedEvents[0].data()
                 setNextEvent({
-                    id: upcomingEvents[0].id,
+                    id: confirmedEvents[0].id,
                     ...eventData,
                     date: eventData.date?.toDate()
                 })
@@ -105,7 +127,7 @@ export default function DashboardPage() {
 
             {/* 統計カード */}
             <div className="stats-grid">
-                <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer' }} onClick={() => navigate('/shifts', { state: { tab: 'calendar' } })}>
                     <div>
                         <div className="stat-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -118,14 +140,28 @@ export default function DashboardPage() {
                         <div className="stat-value">{stats.upcomingEvents}</div>
                         <div className="stat-label mb-md">今後のイベント</div>
                     </div>
-                    {nextEvent && (
+                    {nextEvent ? (
                         <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-light)', fontSize: '0.85rem' }}>
                             <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>次回: {nextEvent.title}</div>
                             <div style={{ color: 'var(--text-tertiary)' }}>{formatDate(nextEvent.date)} {formatTime(nextEvent.date)}</div>
                         </div>
+                    ) : (
+                        <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-light)', fontSize: '0.85rem' }}>
+                            <div style={{ color: 'var(--text-tertiary)' }}>確定済みのイベントはありません</div>
+                        </div>
                     )}
                 </div>
-                <div className="stat-card">
+                <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/shifts', { state: { tab: 'vote' } })}>
+                    <div className="stat-icon" style={{ color: 'var(--accent-pink)' }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                    </div>
+                    <div className="stat-value">{stats.schedulingEvents}</div>
+                    <div className="stat-label">日程調整中</div>
+                </div>
+                <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/customers')}>
                     <div className="stat-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -137,17 +173,31 @@ export default function DashboardPage() {
                     <div className="stat-value">{stats.totalCustomers}</div>
                     <div className="stat-label">登録顧客数</div>
                 </div>
-                <div className="stat-card">
-                    <div className="stat-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 20h9" />
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                        </svg>
+                <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer' }} onClick={() => navigate('/feedbacks', { state: { statusFilter: 'unwritten' } })}>
+                    <div>
+                        <div className="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                            </svg>
+                        </div>
+                        <div className="stat-value">{stats.pendingFeedbacks}</div>
+                        <div className="stat-label mb-md">未入力の感想</div>
                     </div>
-                    <div className="stat-value">{stats.pendingFeedbacks}</div>
-                    <div className="stat-label">未入力の感想</div>
+                    <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-light)' }}>
+                        {pendingByCast.length > 0 ? (
+                            pendingByCast.map(({ name, count }) => (
+                                <div key={name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', marginBottom: '4px' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>{name}</span>
+                                    <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>{count}件</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>未入力なし</div>
+                        )}
+                    </div>
                 </div>
-                <div className="stat-card">
+                <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/gallery')}>
                     <div className="stat-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -163,3 +213,4 @@ export default function DashboardPage() {
         </div>
     )
 }
+

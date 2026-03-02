@@ -306,7 +306,7 @@ h3 {
   position: sticky;
   top: 0;
   z-index: 50;
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-primary);
   margin-top: calc(var(--space-2xl) * -1);
   padding-top: var(--space-2xl);
   padding-bottom: var(--space-md);
@@ -534,9 +534,8 @@ thead {
 
 .sticky-thead th {
   position: sticky;
-  top: 140px;
-  /* .sticky-header の高さ分確保 */
-  background: var(--bg-secondary);
+  top: 0;
+  background: var(--bg-primary);
   z-index: 40;
   box-shadow: 0 1px 0 var(--border-subtle);
 }

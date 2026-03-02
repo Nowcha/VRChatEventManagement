@@ -171,7 +171,7 @@ export default function CustomersPage() {
 
             {/* 顧客テーブル */}
             {filteredCustomers.length > 0 ? (
-                <div className="table-container">
+                <div className="table-container" style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 260px)' }}>
                     <table style={{ tableLayout: 'fixed', width: '100%' }}>
                         <colgroup>
                             <col style={{ width: '15%' }} />

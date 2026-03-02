@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { auth, onAuthStateChanged, db, isFirebaseConfigured } from '../firebase'
+import { auth, onAuthStateChanged, db, isFirebaseConfigured, getTwitterRedirectResult } from '../firebase'
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 
 const AuthContext = createContext(null)
@@ -24,6 +24,20 @@ export function AuthProvider({ children }) {
             setLoading(false)
             return
         }
+
+        // リダイレクト認証の結果を処理（signInWithRedirect 使用時）
+        getTwitterRedirectResult()
+            .then((result) => {
+                if (result?.user) {
+                    console.info('リダイレクト認証成功:', result.user.displayName)
+                }
+            })
+            .catch((error) => {
+                // リダイレクト結果がない場合は正常（エラーではない）
+                if (error.code !== 'auth/null-user') {
+                    console.warn('リダイレクト認証結果の取得に失敗:', error.code || error.message)
+                }
+            })
 
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {

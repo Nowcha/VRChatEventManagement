@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react'
 import { collection, query, orderBy, getDocs, addDoc, updateDoc, doc, where, writeBatch, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useLocation } from 'react-router-dom'
 
 export default function FeedbacksPage() {
     const { user } = useAuth()
+    const location = useLocation()
     const [events, setEvents] = useState([])
     const [customers, setCustomers] = useState([])
     const [feedbacks, setFeedbacks] = useState([])
     const [allUsers, setAllUsers] = useState([])
     const [showModal, setShowModal] = useState(false)
     const [editingFeedback, setEditingFeedback] = useState(null)
-    const [statusFilter, setStatusFilter] = useState('all') // 'all', 'unwritten', 'written', 'posted'
+    const [statusFilter, setStatusFilter] = useState(location.state?.statusFilter || 'all') // 'all', 'unwritten', 'written', 'posted'
     const [castFilter, setCastFilter] = useState('all') // 'all' or cast.id
     const [selectedFeedbackIds, setSelectedFeedbackIds] = useState([])
     const [customerSearchText, setCustomerSearchText] = useState('')

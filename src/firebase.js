@@ -1,5 +1,13 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, TwitterAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth'
+import {
+    getAuth,
+    TwitterAuthProvider,
+    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
+    signOut,
+    onAuthStateChanged
+} from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
@@ -35,11 +43,44 @@ export { auth, db, storage }
 // Auth Providers
 const twitterProvider = new TwitterAuthProvider()
 
-export const signInWithTwitter = () => {
+/**
+ * X (Twitter) ログイン
+ * signInWithPopup を試行し、失敗した場合は signInWithRedirect にフォールバック
+ * （サードパーティCookieブロック等への対策）
+ */
+export const signInWithTwitter = async () => {
     if (!isFirebaseConfigured) {
-        return Promise.reject(new Error('Firebase が未設定です。.env ファイルを設定してください。'))
+        throw new Error('Firebase が未設定です。.env ファイルを設定してください。')
     }
-    return signInWithPopup(auth, twitterProvider)
+    try {
+        // まず Popup 方式を試行
+        const result = await signInWithPopup(auth, twitterProvider)
+        return result
+    } catch (error) {
+        // Popup がブロックされた場合、または Cookie 関連のエラーの場合はリダイレクト方式にフォールバック
+        const fallbackErrors = [
+            'auth/popup-blocked',
+            'auth/popup-closed-by-user',
+            'auth/cancelled-popup-request',
+            'auth/web-storage-unsupported',
+            'auth/invalid-credential',
+            'auth/operation-not-allowed',
+        ]
+        if (fallbackErrors.includes(error.code) || error.message?.includes('request is invalid')) {
+            console.warn('Popup 認証失敗、リダイレクト方式にフォールバック:', error.code || error.message)
+            return signInWithRedirect(auth, twitterProvider)
+        }
+        throw error
+    }
+}
+
+/**
+ * リダイレクト認証の結果を取得
+ * ページ読み込み時に呼び出して、リダイレクト方式でのログイン結果を処理する
+ */
+export const getTwitterRedirectResult = () => {
+    if (!auth) return Promise.resolve(null)
+    return getRedirectResult(auth)
 }
 
 export const logOut = () => {
