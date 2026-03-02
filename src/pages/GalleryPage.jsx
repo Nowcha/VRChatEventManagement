@@ -9,6 +9,9 @@ export default function GalleryPage() {
     const [events, setEvents] = useState([])
     const [photos, setPhotos] = useState([])
     const [selectedEventId, setSelectedEventId] = useState('')
+    const [isManualUploadEvent, setIsManualUploadEvent] = useState(false)
+    const [manualDateInput, setManualDateInput] = useState(new Date().toISOString().split('T')[0])
+    const [manualTimeSlotInput, setManualTimeSlotInput] = useState('21:00')
     const [lightboxImage, setLightboxImage] = useState(null)
     const [uploading, setUploading] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -45,20 +48,30 @@ export default function GalleryPage() {
 
     const handleUpload = async (e) => {
         const files = Array.from(e.target.files)
-        if (files.length === 0 || !selectedEventId) return
+        const effectiveEventId = isManualUploadEvent ? '' : selectedEventId
+
+        let effectiveManualInput = ''
+        if (isManualUploadEvent && manualDateInput && manualTimeSlotInput) {
+            const [y, m, d] = manualDateInput.split('-')
+            effectiveManualInput = `${y}年${m}月${d}日 ${manualTimeSlotInput}`
+        }
+
+        if (files.length === 0 || (!effectiveEventId && !effectiveManualInput)) return
 
         setUploading(true)
         try {
+            const folderName = effectiveEventId || 'manual'
             for (const file of files) {
                 const timestamp = Date.now()
-                const storageRef = ref(storage, `gallery/${selectedEventId}/${timestamp}_${file.name}`)
+                const storageRef = ref(storage, `gallery/${folderName}/${timestamp}_${file.name}`)
                 await uploadBytes(storageRef, file)
                 const url = await getDownloadURL(storageRef)
 
                 await addDoc(collection(db, 'photos'), {
-                    eventId: selectedEventId,
+                    eventId: effectiveEventId,
+                    eventManualInput: effectiveManualInput,
                     imageUrl: url,
-                    storagePath: `gallery/${selectedEventId}/${timestamp}_${file.name}`,
+                    storagePath: `gallery/${folderName}/${timestamp}_${file.name}`,
                     uploadedBy: user.uid,
                     uploadedAt: new Date()
                 })
@@ -86,7 +99,10 @@ export default function GalleryPage() {
         }
     }
 
-    const getEventTitle = (id) => {
+    const confirmedEvents = events.filter(e => e.status === 'confirmed')
+
+    const getEventTitle = (id, manualInput) => {
+        if (!id && manualInput) return manualInput
         const ev = events.find(e => e.id === id)
         if (!ev) return '不明'
         const d = ev.date
@@ -106,12 +122,12 @@ export default function GalleryPage() {
         ? photos.filter(p => p.eventId === selectedEventId)
         : photos
 
-    // イベントごとにグルーピング
+    // イベントごとにグルーピング（手入力イベントも含む）
     const groupedPhotos = {}
     filteredPhotos.forEach(p => {
-        const key = p.eventId
-        if (!groupedPhotos[key]) groupedPhotos[key] = []
-        groupedPhotos[key].push(p)
+        const key = p.eventId || `manual:${p.eventManualInput || '不明'}`
+        if (!groupedPhotos[key]) groupedPhotos[key] = { photos: [], manualInput: p.eventManualInput || '' }
+        groupedPhotos[key].photos.push(p)
     })
 
     if (loading) {
@@ -120,49 +136,94 @@ export default function GalleryPage() {
 
     return (
         <div className="fade-in">
-            <div className="page-header">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="page-title">ギャラリー</h1>
-                        <p className="page-subtitle">イベントの集合写真</p>
+            <div className="sticky-header">
+                <div className="page-header" style={{ marginBottom: '16px' }}>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="page-title">ギャラリー</h1>
+                            <p className="page-subtitle">イベントの集合写真</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* アップロード・フィルタ */}
-            <div className="flex gap-md mb-lg" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
-                <select
-                    className="form-select"
-                    style={{ width: 'auto', minWidth: '200px' }}
-                    value={selectedEventId}
-                    onChange={e => setSelectedEventId(e.target.value)}
-                >
-                    <option value="">すべてのイベント</option>
-                    {events.map(ev => (
-                        <option key={ev.id} value={ev.id}>
-                            {getEventTitle(ev.id)}
-                        </option>
-                    ))}
-                </select>
+                {/* アップロード・フィルタ */}
+                <div className="flex gap-md" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div className="flex gap-sm" style={{ alignItems: 'center' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                <input
+                                    type="radio"
+                                    checked={!isManualUploadEvent}
+                                    onChange={() => { setIsManualUploadEvent(false); setManualDateInput(new Date().toISOString().split('T')[0]); setManualTimeSlotInput('21:00') }}
+                                    style={{ accentColor: 'var(--accent-pink)' }}
+                                />
+                                <span className="text-sm">一覧から選択</span>
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                <input
+                                    type="radio"
+                                    checked={isManualUploadEvent}
+                                    onChange={() => { setIsManualUploadEvent(true); setSelectedEventId('') }}
+                                    style={{ accentColor: 'var(--accent-pink)' }}
+                                />
+                                <span className="text-sm">手入力する</span>
+                            </label>
+                        </div>
+                        {!isManualUploadEvent ? (
+                            <select
+                                className="form-select"
+                                style={{ width: 'auto', minWidth: '200px' }}
+                                value={selectedEventId}
+                                onChange={e => setSelectedEventId(e.target.value)}
+                            >
+                                <option value="">すべてのイベント</option>
+                                {confirmedEvents.map(ev => (
+                                    <option key={ev.id} value={ev.id}>
+                                        {getEventTitle(ev.id)}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <div className="flex gap-sm">
+                                <input
+                                    type="date"
+                                    className="form-input"
+                                    value={manualDateInput}
+                                    onChange={e => setManualDateInput(e.target.value)}
+                                    style={{ minWidth: '150px' }}
+                                />
+                                <select
+                                    className="form-select"
+                                    value={manualTimeSlotInput}
+                                    onChange={e => setManualTimeSlotInput(e.target.value)}
+                                    style={{ width: '120px' }}
+                                >
+                                    <option value="21:00">21:00</option>
+                                    <option value="24:00">24:00</option>
+                                </select>
+                            </div>
+                        )}
+                    </div>
 
-                {selectedEventId && (
-                    <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
-                        {uploading ? 'アップロード中...' : '📷 写真をアップロード'}
-                        <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={handleUpload}
-                            disabled={uploading}
-                            style={{ display: 'none' }}
-                        />
-                    </label>
-                )}
+                    {(selectedEventId || (isManualUploadEvent && manualDateInput && manualTimeSlotInput)) && (
+                        <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+                            {uploading ? 'アップロード中...' : '📷 写真をアップロード'}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={handleUpload}
+                                disabled={uploading}
+                                style={{ display: 'none' }}
+                            />
+                        </label>
+                    )}
+                </div>
             </div>
 
             {/* ギャラリー表示 */}
             {Object.keys(groupedPhotos).length > 0 ? (
-                Object.entries(groupedPhotos).map(([eventId, eventPhotos]) => (
+                Object.entries(groupedPhotos).map(([eventId, group]) => (
                     <div key={eventId} className="mb-lg">
                         <h3 style={{
                             fontFamily: 'var(--font-serif)',
@@ -170,13 +231,13 @@ export default function GalleryPage() {
                             color: 'var(--text-secondary)',
                             fontSize: '1rem'
                         }}>
-                            {getEventTitle(eventId)}
+                            {getEventTitle(eventId.startsWith('manual:') ? '' : eventId, group.manualInput)}
                             <span className="text-xs text-muted" style={{ marginLeft: '12px' }}>
-                                {eventPhotos.length}枚
+                                {group.photos.length}枚
                             </span>
                         </h3>
                         <div className="gallery-grid">
-                            {eventPhotos.map(photo => (
+                            {group.photos.map(photo => (
                                 <div
                                     key={photo.id}
                                     className="gallery-item"

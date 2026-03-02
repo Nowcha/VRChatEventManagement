@@ -283,80 +283,82 @@ export default function FeedbacksPage() {
 
     return (
         <div className="fade-in">
-            <div className="page-header">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="page-title">感想・接客記録</h1>
-                        <p className="page-subtitle">お客さまごとの接客メモと感想管理</p>
+            <div className="sticky-header">
+                <div className="page-header" style={{ marginBottom: '16px' }}>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="page-title">感想・接客記録</h1>
+                            <p className="page-subtitle">お客さまごとの接客メモと感想管理</p>
+                        </div>
+                        <button className="btn btn-primary" onClick={openCreateModal}>
+                            ＋ 感想入力
+                        </button>
                     </div>
-                    <button className="btn btn-primary" onClick={openCreateModal}>
-                        ＋ 感想入力
-                    </button>
-                </div>
-            </div>
-
-            {/* フィルタ */}
-            <div className="flex gap-md mb-lg" style={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div className="flex gap-sm items-center">
-                    {/* ステータスフィルタ */}
-                    <div className="flex gap-sm">
-                        {[
-                            { id: 'all', label: '全件表示' },
-                            { id: 'unwritten', label: '未入力' },
-                            { id: 'written', label: '入力済み' },
-                            { id: 'posted', label: '投稿済み' }
-                        ].map(tab => (
-                            <button
-                                key={tab.id}
-                                className={`btn btn-sm ${statusFilter === tab.id ? 'btn-primary' : 'btn-secondary'}`}
-                                onClick={() => {
-                                    setStatusFilter(tab.id)
-                                    setSelectedFeedbackIds([]) // フィルタ変更時に選択を解除
-                                }}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* 担当キャストフィルタ */}
-                    <select
-                        className="form-select form-select-sm"
-                        style={{ width: 'auto', minWidth: '140px', marginLeft: '8px' }}
-                        value={castFilter}
-                        onChange={e => {
-                            setCastFilter(e.target.value)
-                            setSelectedFeedbackIds([])
-                        }}
-                    >
-                        <option value="all">すべての担当者</option>
-                        {allUsers.map(u => (
-                            <option key={u.id} value={u.id}>{u.displayName}</option>
-                        ))}
-                    </select>
                 </div>
 
-                {selectedFeedbackIds.length > 0 && (
+                {/* フィルタ */}
+                <div className="flex gap-md" style={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div className="flex gap-sm items-center">
-                        <span className="text-sm text-muted">{selectedFeedbackIds.length}件選択中:</span>
+                        {/* ステータスフィルタ */}
+                        <div className="flex gap-sm">
+                            {[
+                                { id: 'all', label: '全件表示' },
+                                { id: 'unwritten', label: '未入力' },
+                                { id: 'written', label: '入力済み' },
+                                { id: 'posted', label: '投稿済み' }
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    className={`btn btn-sm ${statusFilter === tab.id ? 'btn-primary' : 'btn-secondary'}`}
+                                    onClick={() => {
+                                        setStatusFilter(tab.id)
+                                        setSelectedFeedbackIds([]) // フィルタ変更時に選択を解除
+                                    }}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* 担当キャストフィルタ */}
                         <select
-                            className="form-select"
-                            style={{ width: 'auto', minWidth: '150px' }}
+                            className="form-select form-select-sm"
+                            style={{ width: 'auto', minWidth: '140px', marginLeft: '8px' }}
+                            value={castFilter}
                             onChange={e => {
-                                if (e.target.value) {
-                                    handleBulkStatusChange(e.target.value)
-                                    e.target.value = ''
-                                }
+                                setCastFilter(e.target.value)
+                                setSelectedFeedbackIds([])
                             }}
-                            value=""
                         >
-                            <option value="" disabled>ステータスを一括変更</option>
-                            <option value="unwritten">未入力にする</option>
-                            <option value="written">入力済みにする</option>
-                            <option value="posted">投稿済みにする</option>
+                            <option value="all">すべての担当者</option>
+                            {allUsers.map(u => (
+                                <option key={u.id} value={u.id}>{u.displayName}</option>
+                            ))}
                         </select>
                     </div>
-                )}
+
+                    {selectedFeedbackIds.length > 0 && (
+                        <div className="flex gap-sm items-center">
+                            <span className="text-sm text-muted">{selectedFeedbackIds.length}件選択中:</span>
+                            <select
+                                className="form-select"
+                                style={{ width: 'auto', minWidth: '150px' }}
+                                onChange={e => {
+                                    if (e.target.value) {
+                                        handleBulkStatusChange(e.target.value)
+                                        e.target.value = ''
+                                    }
+                                }}
+                                value=""
+                            >
+                                <option value="" disabled>ステータスを一括変更</option>
+                                <option value="unwritten">未入力にする</option>
+                                <option value="written">入力済みにする</option>
+                                <option value="posted">投稿済みにする</option>
+                            </select>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* 感想一覧 */}

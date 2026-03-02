@@ -9,7 +9,7 @@ export default function CustomersPage() {
     const [showModal, setShowModal] = useState(false)
     const [editingCustomer, setEditingCustomer] = useState(null)
     const [selectedCustomer, setSelectedCustomer] = useState(null)
-    const PREDEFINED_TAGS = ['常連', 'VIP', '新規', '要注意']
+    const PREDEFINED_TAGS = ['常連', 'VIP', '新規', 'リピーター', '要注意']
     const [formData, setFormData] = useState({
         vrchatName: '',
         firstVisitDate: '',
@@ -32,7 +32,9 @@ export default function CustomersPage() {
 
             setCustomers(snapshot.docs.map(d => {
                 const data = d.data()
-                const visitCount = feedbacks.filter(fb => fb.customerId === d.id).length
+                const visitCount = feedbacks.filter(fb =>
+                    (fb.customerIds && fb.customerIds.includes(d.id)) || fb.customerId === d.id
+                ).length
                 return {
                     id: d.id,
                     ...data,
@@ -127,54 +129,65 @@ export default function CustomersPage() {
 
     return (
         <div className="fade-in">
-            <div className="page-header">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="page-title">顧客データベース</h1>
-                        <p className="page-subtitle">{customers.length}名の顧客情報</p>
+            <div className="sticky-header">
+                <div className="page-header" style={{ marginBottom: '16px' }}>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="page-title">顧客データベース</h1>
+                            <p className="page-subtitle">{customers.length}名の顧客情報</p>
+                        </div>
+                        <button className="btn btn-primary" onClick={openCreateModal}>
+                            ＋ 顧客登録
+                        </button>
                     </div>
-                    <button className="btn btn-primary" onClick={openCreateModal}>
-                        ＋ 顧客登録
-                    </button>
                 </div>
-            </div>
 
-            {/* 検索・フィルタ */}
-            <div className="flex gap-md mb-lg" style={{ flexWrap: 'wrap' }}>
-                <div className="search-bar">
-                    <span className="search-icon">🔍</span>
-                    <input
-                        type="text"
-                        placeholder="名前で検索..."
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                    />
+                {/* 検索・フィルタ */}
+                <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
+                    <div className="search-bar">
+                        <span className="search-icon">🔍</span>
+                        <input
+                            type="text"
+                            placeholder="名前で検索..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    {allTags.length > 0 && (
+                        <select
+                            className="form-select"
+                            style={{ width: 'auto', minWidth: '140px' }}
+                            value={filterTag}
+                            onChange={e => setFilterTag(e.target.value)}
+                        >
+                            <option value="">すべてのタグ</option>
+                            {allTags.map(tag => (
+                                <option key={tag} value={tag}>{tag}</option>
+                            ))}
+                        </select>
+                    )}
                 </div>
-                {allTags.length > 0 && (
-                    <select
-                        className="form-select"
-                        style={{ width: 'auto', minWidth: '140px' }}
-                        value={filterTag}
-                        onChange={e => setFilterTag(e.target.value)}
-                    >
-                        <option value="">すべてのタグ</option>
-                        {allTags.map(tag => (
-                            <option key={tag} value={tag}>{tag}</option>
-                        ))}
-                    </select>
-                )}
             </div>
 
             {/* 顧客テーブル */}
             {filteredCustomers.length > 0 ? (
                 <div className="table-container">
-                    <table>
+                    <table style={{ tableLayout: 'fixed', width: '100%' }}>
+                        <colgroup>
+                            <col style={{ width: '15%' }} />
+                            <col style={{ width: '12%' }} />
+                            <col style={{ width: '8%' }} />
+                            <col style={{ width: '12%' }} />
+                            <col style={{ width: '35%' }} />
+                            <col style={{ width: '18%' }} />
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th>VRChat表示名</th>
                                 <th>初来店日</th>
                                 <th>来店回数</th>
                                 <th>タグ</th>
+                                <th>備考</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -197,6 +210,11 @@ export default function CustomersPage() {
                                                 <span key={tag} className="tag">{tag}</span>
                                             ))}
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span className="text-sm" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={customer.notes || ''}>
+                                            {customer.notes || '-'}
+                                        </span>
                                     </td>
                                     <td>
                                         <div className="flex gap-sm">

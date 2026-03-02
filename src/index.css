@@ -301,6 +301,19 @@ h3 {
   letter-spacing: 0.08em;
 }
 
+/* ---------- Sticky Header ---------- */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--bg-primary);
+  margin-top: calc(var(--space-2xl) * -1);
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border-light);
+}
+
 /* ---------- Page Header ---------- */
 .page-header {
   margin-bottom: var(--space-2xl);
