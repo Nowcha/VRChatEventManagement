@@ -143,7 +143,7 @@ export default function CustomersPage() {
                 </div>
 
                 {/* 検索・フィルタ */}
-                <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
+                <div className="flex gap-md" style={{ flexWrap: 'wrap', marginBottom: '16px' }}>
                     <div className="search-bar">
                         <span className="search-icon">🔍</span>
                         <input
@@ -167,10 +167,10 @@ export default function CustomersPage() {
                         </select>
                     )}
                 </div>
-                {/* 顧客テーブル */}
+                {/* 顧客テーブル (ヘッダー部分) */}
                 {filteredCustomers.length > 0 ? (
-                    <div className="table-container">
-                        <table style={{ tableLayout: 'fixed', width: '100%' }}>
+                    <div className="table-container" style={{ borderBottom: 'none', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginBottom: 0 }}>
+                        <table style={{ tableLayout: 'fixed', width: '100%', borderBottom: '1px solid var(--border-subtle)' }}>
                             <colgroup>
                                 <col style={{ width: '15%' }} />
                                 <col style={{ width: '12%' }} />
@@ -181,12 +181,12 @@ export default function CustomersPage() {
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th>VRChat表示名</th>
-                                    <th>初来店日</th>
-                                    <th>来店回数</th>
-                                    <th>タグ</th>
-                                    <th>備考</th>
-                                    <th>操作</th>
+                                    <th style={{ borderBottom: 'none' }}>VRChat表示名</th>
+                                    <th style={{ borderBottom: 'none' }}>初来店日</th>
+                                    <th style={{ borderBottom: 'none' }}>来店回数</th>
+                                    <th style={{ borderBottom: 'none' }}>タグ</th>
+                                    <th style={{ borderBottom: 'none' }}>備考</th>
+                                    <th style={{ borderBottom: 'none' }}>操作</th>
                                 </tr>
                             </thead>
                         </table>
@@ -196,7 +196,7 @@ export default function CustomersPage() {
 
             {/* 顧客テーブル本体 */}
             {filteredCustomers.length > 0 ? (
-                <div className="table-container" style={{ borderTop: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0, marginTop: '-17px' }}>
+                <div className="table-container" style={{ borderTop: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0, marginTop: 0 }}>
                     <table style={{ tableLayout: 'fixed', width: '100%' }}>
                         <colgroup>
                             <col style={{ width: '15%' }} />
