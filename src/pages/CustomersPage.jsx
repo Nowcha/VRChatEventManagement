@@ -16,6 +16,8 @@ export default function CustomersPage() {
         tags: [],
         notes: ''
     })
+    const [sortKey, setSortKey] = useState('vrchatName')
+    const [sortDir, setSortDir] = useState('asc')
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -116,6 +118,38 @@ export default function CustomersPage() {
         return matchesSearch && matchesTag
     })
 
+    // ソート
+    const handleSort = (key) => {
+        if (sortKey === key) {
+            setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')
+        } else {
+            setSortKey(key)
+            setSortDir('asc')
+        }
+    }
+
+    const sortedCustomers = [...filteredCustomers].sort((a, b) => {
+        const dir = sortDir === 'asc' ? 1 : -1
+        if (sortKey === 'vrchatName') {
+            return (a.vrchatName || '').localeCompare(b.vrchatName || '', 'ja') * dir
+        }
+        if (sortKey === 'firstVisitDate') {
+            const aTime = a.firstVisitDate ? new Date(a.firstVisitDate).getTime() : 0
+            const bTime = b.firstVisitDate ? new Date(b.firstVisitDate).getTime() : 0
+            return (aTime - bTime) * dir
+        }
+        if (sortKey === 'visitCount') {
+            return ((a.visitCount || 0) - (b.visitCount || 0)) * dir
+        }
+        return 0
+    })
+
+    const SortIcon = ({ col }) => (
+        <span style={{ marginLeft: '4px', opacity: sortKey === col ? 1 : 0.25, fontSize: '0.65rem' }}>
+            {sortKey === col && sortDir === 'desc' ? '▼' : '▲'}
+        </span>
+    )
+
     const formatDate = (date) => {
         if (!date) return '-'
         return new Intl.DateTimeFormat('ja-JP', {
@@ -183,16 +217,22 @@ export default function CustomersPage() {
                         </colgroup>
                         <thead className="sticky-thead">
                             <tr>
-                                <th>VRChat表示名</th>
-                                <th>初来店日</th>
-                                <th>来店回数</th>
+                                <th style={{ textTransform: 'none', cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('vrchatName')}>
+                                    VRChat表示名<SortIcon col="vrchatName" />
+                                </th>
+                                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('firstVisitDate')}>
+                                    初来店日<SortIcon col="firstVisitDate" />
+                                </th>
+                                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('visitCount')}>
+                                    来店回数<SortIcon col="visitCount" />
+                                </th>
                                 <th>タグ</th>
                                 <th>備考</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredCustomers.map(customer => (
+                            {sortedCustomers.map(customer => (
                                 <tr key={customer.id}>
                                     <td>
                                         <span
