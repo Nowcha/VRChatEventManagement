@@ -167,36 +167,11 @@ export default function CustomersPage() {
                         </select>
                     )}
                 </div>
-                {/* 顧客テーブル (ヘッダー部分) */}
-                {filteredCustomers.length > 0 ? (
-                    <div className="table-container" style={{ borderBottom: 'none', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginBottom: 0 }}>
-                        <table style={{ tableLayout: 'fixed', width: '100%', borderBottom: '1px solid var(--border-subtle)' }}>
-                            <colgroup>
-                                <col style={{ width: '15%' }} />
-                                <col style={{ width: '12%' }} />
-                                <col style={{ width: '8%' }} />
-                                <col style={{ width: '12%' }} />
-                                <col style={{ width: '35%' }} />
-                                <col style={{ width: '18%' }} />
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th style={{ borderBottom: 'none' }}>VRChat表示名</th>
-                                    <th style={{ borderBottom: 'none' }}>初来店日</th>
-                                    <th style={{ borderBottom: 'none' }}>来店回数</th>
-                                    <th style={{ borderBottom: 'none' }}>タグ</th>
-                                    <th style={{ borderBottom: 'none' }}>備考</th>
-                                    <th style={{ borderBottom: 'none' }}>操作</th>
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
-                ) : null}
             </div>
 
-            {/* 顧客テーブル本体 */}
+            {/* 顧客テーブル */}
             {filteredCustomers.length > 0 ? (
-                <div className="table-container" style={{ borderTop: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0, marginTop: 0 }}>
+                <div className="table-container">
                     <table style={{ tableLayout: 'fixed', width: '100%' }}>
                         <colgroup>
                             <col style={{ width: '15%' }} />
@@ -206,6 +181,16 @@ export default function CustomersPage() {
                             <col style={{ width: '35%' }} />
                             <col style={{ width: '18%' }} />
                         </colgroup>
+                        <thead className="sticky-thead">
+                            <tr>
+                                <th>VRChat表示名</th>
+                                <th>初来店日</th>
+                                <th>来店回数</th>
+                                <th>タグ</th>
+                                <th>備考</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             {filteredCustomers.map(customer => (
                                 <tr key={customer.id}>

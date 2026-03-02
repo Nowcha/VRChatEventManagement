@@ -532,6 +532,15 @@ thead {
   background: var(--bg-glass);
 }
 
+.sticky-thead th {
+  position: sticky;
+  top: 140px;
+  /* .sticky-header の高さ分確保 */
+  background: var(--bg-secondary);
+  z-index: 40;
+  box-shadow: 0 1px 0 var(--border-subtle);
+}
+
 th {
   padding: var(--space-md) var(--space-lg);
   font-size: 0.75rem;
