@@ -16,6 +16,7 @@ export default function DashboardPage() {
     })
     const [nextEvent, setNextEvent] = useState(null)
     const [pendingByCast, setPendingByCast] = useState([])
+    const [candidateUserStatus, setCandidateUserStatus] = useState([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -52,9 +53,11 @@ export default function DashboardPage() {
             const feedbacksSnapshot = await getDocs(feedbacksQuery)
             const unwrittenFeedbacks = feedbacksSnapshot.docs.map(d => d.data())
 
-            // ユーザー（キャスト）取得して担当者別集計
+            // ユーザー（キャスト）取得
             const usersSnapshot = await getDocs(collection(db, 'users'))
             const users = usersSnapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+
+            // 未入力感想の担当者別集計
             const breakdown = users
                 .map(u => ({
                     name: u.displayName || '不明',
@@ -62,6 +65,21 @@ export default function DashboardPage() {
                 }))
                 .filter(item => item.count > 0)
             setPendingByCast(breakdown)
+
+            // 候補日イベントのユーザーごとの回答状況
+            const candidateEventIds = candidateEvents.map(d => d.id)
+            if (candidateEventIds.length > 0) {
+                const shiftsSnapshot = await getDocs(collection(db, 'shifts'))
+                const shifts = shiftsSnapshot.docs.map(d => d.data())
+                const userStatus = users.map(u => {
+                    const userShifts = shifts.filter(s => candidateEventIds.includes(s.eventId) && s.userId === u.id)
+                    const available = userShifts.filter(s => s.status === 'available').length
+                    const unavailable = userShifts.filter(s => s.status === 'unavailable').length
+                    const unresponded = candidateEventIds.length - available - unavailable
+                    return { name: u.displayName || '不明', available, unavailable, unresponded }
+                })
+                setCandidateUserStatus(userStatus)
+            }
 
             // 写真数
             const photosSnapshot = await getDocs(collection(db, 'photos'))
@@ -151,15 +169,31 @@ export default function DashboardPage() {
                         </div>
                     )}
                 </div>
-                <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/shifts', { state: { tab: 'vote' } })}>
-                    <div className="stat-icon" style={{ color: 'var(--accent-pink)' }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                        </svg>
+                <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer' }} onClick={() => navigate('/shifts', { state: { tab: 'vote' } })}>
+                    <div>
+                        <div className="stat-icon" style={{ color: 'var(--accent-pink)' }}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                        <div className="stat-value">{stats.schedulingEvents}</div>
+                        <div className="stat-label mb-md">日程調整中</div>
                     </div>
-                    <div className="stat-value">{stats.schedulingEvents}</div>
-                    <div className="stat-label">日程調整中</div>
+                    <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-light)' }}>
+                        {candidateUserStatus.length > 0 ? (
+                            candidateUserStatus.map(({ name, unresponded }) => (
+                                <div key={name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', marginBottom: '4px' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>{name}</span>
+                                    <span style={{ color: unresponded === 0 ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+                                        {unresponded === 0 ? '完了' : '未済'}
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>候補日なし</div>
+                        )}
+                    </div>
                 </div>
                 <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/customers')}>
                     <div className="stat-icon">
