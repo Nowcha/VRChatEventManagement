@@ -183,10 +183,33 @@ export default function FeedbacksPage() {
         return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} ${ev.timeSlot || ''}`
     }
 
+    const getEventDateObj = (id, manualInput) => {
+        if (!id && manualInput) {
+            const match = manualInput.match(/(\d{4})年(\d{2})月(\d{2})日\s+(\d{2}):(\d{2})/)
+            if (match) {
+                return new Date(match[1], parseInt(match[2]) - 1, match[3], match[4], match[5])
+            }
+            return new Date(0)
+        }
+        const ev = events.find(e => e.id === id)
+        if (!ev || !ev.date) return new Date(0)
+
+        const d = new Date(ev.date)
+        if (ev.timeSlot) {
+            const [h, m] = ev.timeSlot.split(':')
+            d.setHours(parseInt(h), parseInt(m), 0, 0)
+        }
+        return d
+    }
+
     const filteredFeedbacks = feedbacks.filter(fb => {
         const matchStatus = statusFilter === 'all' || fb.status === statusFilter
         const matchCast = castFilter === 'all' || fb.assignedCastId === castFilter
         return matchStatus && matchCast
+    }).sort((a, b) => {
+        const dateA = getEventDateObj(a.eventId, a.eventManualInput).getTime();
+        const dateB = getEventDateObj(b.eventId, b.eventManualInput).getTime();
+        return dateA - dateB;
     })
 
     const toggleSelection = (id) => {
@@ -415,7 +438,7 @@ export default function FeedbacksPage() {
                                 <button
                                     className="btn btn-ghost"
                                     onClick={(e) => handleCopy(fb, e)}
-                                    style={{ padding: '8px', fontSize: '1rem', color: 'var(--text-secondary)' }}
+                                    style={{ padding: '8px', fontSize: '1rem', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' }}
                                     title="名前と感想をコピー"
                                 >
                                     コピー
