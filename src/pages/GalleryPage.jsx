@@ -130,6 +130,20 @@ export default function GalleryPage() {
         groupedPhotos[key].photos.push(p)
     })
 
+    // グループを日付降順にソート
+    const getGroupDate = (key, manualInput) => {
+        if (key.startsWith('manual:')) {
+            const match = manualInput.match(/(\d{4})年(\d{1,2})月(\d{1,2})日\s+(\d{1,2}):(\d{2})/)
+            if (match) return new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]), parseInt(match[4]), parseInt(match[5]))
+            return new Date(0)
+        }
+        const ev = events.find(e => e.id === key)
+        return ev?.date || new Date(0)
+    }
+    const sortedGroups = Object.entries(groupedPhotos).sort(([keyA, groupA], [keyB, groupB]) =>
+        getGroupDate(keyB, groupB.manualInput) - getGroupDate(keyA, groupA.manualInput)
+    )
+
     if (loading) {
         return <div className="loading-spinner"><div className="spinner"></div></div>
     }
@@ -222,8 +236,8 @@ export default function GalleryPage() {
             </div>
 
             {/* ギャラリー表示 */}
-            {Object.keys(groupedPhotos).length > 0 ? (
-                Object.entries(groupedPhotos).map(([eventId, group]) => (
+            {sortedGroups.length > 0 ? (
+                sortedGroups.map(([eventId, group]) => (
                     <div key={eventId} className="mb-lg">
                         <h3 style={{
                             fontFamily: 'var(--font-serif)',

@@ -78,7 +78,7 @@ export default function FeedbacksPage() {
             eventManualInput: '',
             manualDate: new Date().toISOString().split('T')[0],
             manualTimeSlot: '21:00',
-            customerIds: customers[0] ? [customers[0].id] : [],
+            customerIds: [],
             assignedCastId: user.uid,
             content: '',
             status: 'unwritten'
@@ -466,8 +466,8 @@ export default function FeedbacksPage() {
 
             {/* 感想入力/編集モーダル */}
             {showModal && (
-                <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
+                <div className="modal-overlay">
+                    <div className="modal">
                         <div className="modal-header">
                             <h3 className="modal-title">
                                 {editingFeedback ? '感想の編集' : '感想入力'}
@@ -543,6 +543,28 @@ export default function FeedbacksPage() {
                                         onChange={e => setCustomerSearchText(e.target.value)}
                                         style={{ marginBottom: '8px' }}
                                     />
+                                    {formData.customerIds.length > 0 && (
+                                        <div style={{ marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                            {formData.customerIds.map(id => {
+                                                const name = customers.find(c => c.id === id)?.vrchatName || '不明'
+                                                return (
+                                                    <span key={id} style={{
+                                                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                                        padding: '2px 10px', borderRadius: '999px',
+                                                        background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)',
+                                                        fontSize: '0.8rem', color: 'var(--text-primary)'
+                                                    }}>
+                                                        {name}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, customerIds: formData.customerIds.filter(x => x !== id) })}
+                                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', lineHeight: 1, color: 'var(--text-tertiary)', fontSize: '0.75rem' }}
+                                                        >✕</button>
+                                                    </span>
+                                                )
+                                            })}
+                                        </div>
+                                    )}
                                     <div style={{ maxHeight: '160px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '4px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                         {customers
                                             .filter(c => c.vrchatName.toLowerCase().includes(customerSearchText.toLowerCase()))
@@ -551,7 +573,7 @@ export default function FeedbacksPage() {
                                                     <input
                                                         type="checkbox"
                                                         checked={formData.customerIds.includes(c.id)}
-                                                        onChange={(e) => {
+                                                        onChange={() => {
                                                             const current = formData.customerIds || []
                                                             if (current.includes(c.id)) {
                                                                 setFormData({ ...formData, customerIds: current.filter(id => id !== c.id) })
@@ -567,9 +589,6 @@ export default function FeedbacksPage() {
                                                 </label>
                                             ))}
                                     </div>
-                                    <span className="text-xs text-muted" style={{ marginTop: '4px', display: 'block' }}>
-                                        現在 {formData.customerIds.length} 名選択中
-                                    </span>
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">担当キャスト</label>

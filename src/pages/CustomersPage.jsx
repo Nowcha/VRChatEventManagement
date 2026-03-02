@@ -287,8 +287,8 @@ export default function CustomersPage() {
 
             {/* 顧客詳細モーダル */}
             {selectedCustomer && (
-                <div className="modal-overlay" onClick={() => setSelectedCustomer(null)}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
+                <div className="modal-overlay">
+                    <div className="modal">
                         <div className="modal-header">
                             <h3 className="modal-title">{selectedCustomer.vrchatName}</h3>
                             <button className="modal-close" onClick={() => setSelectedCustomer(null)}>✕</button>
@@ -332,8 +332,8 @@ export default function CustomersPage() {
 
             {/* 登録/編集モーダル */}
             {showModal && (
-                <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
+                <div className="modal-overlay">
+                    <div className="modal">
                         <div className="modal-header">
                             <h3 className="modal-title">
                                 {editingCustomer ? '顧客情報の編集' : '新規顧客登録'}
