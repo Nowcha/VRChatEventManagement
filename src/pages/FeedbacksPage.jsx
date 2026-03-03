@@ -382,7 +382,7 @@ export default function FeedbacksPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
                     {filteredFeedbacks.map(fb => (
-                        <div key={fb.id} className="card" style={{ display: 'flex', alignItems: 'center', padding: '24px', gap: '32px' }}>
+                        <div key={fb.id} className="card feedback-card">
                             {/* Checkbox */}
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <input
@@ -394,18 +394,18 @@ export default function FeedbacksPage() {
                             </div>
 
                             {/* Main Content Area */}
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', cursor: 'pointer' }} onClick={() => openEditModal(fb)}>
+                            <div className="feedback-card-body" onClick={() => openEditModal(fb)}>
 
                                 {/* Top Row: Date */}
                                 <div style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
                                     {getEventDateFormatted(fb.eventId, fb.eventManualInput)}
                                 </div>
 
-                                {/* Bottom Row: 3 columns */}
-                                <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                                {/* Bottom Row: columns */}
+                                <div className="feedback-card-columns">
 
                                     {/* Column 1: Customer, Cast, Status */}
-                                    <div style={{ flex: '0 0 320px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div className="feedback-card-meta">
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                             <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', width: '100px', textAlign: 'justify', textAlignLast: 'justify' }}>お客さま</span>
                                             <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginRight: '16px' }}>：</span>
@@ -430,7 +430,7 @@ export default function FeedbacksPage() {
                                     </div>
 
                                     {/* Column 2: Feedback Content */}
-                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '24px' }}>
+                                    <div className="feedback-card-content">
                                         <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>感想</span>
                                         <div style={{ fontSize: '1rem', color: 'var(--text-primary)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
                                             {fb.content || ''}

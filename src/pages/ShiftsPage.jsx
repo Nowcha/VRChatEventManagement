@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, writeBatch } from 'firebase/firestore'
+import { collection, query, orderBy, getDocs, addDoc, updateDoc, doc, Timestamp, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
@@ -723,7 +723,7 @@ export default function ShiftsPage() {
                                                             </span>
                                                         </td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            <div className="flex gap-sm" style={{ justifyContent: 'center' }}>
+                                                            <div className="flex vote-action-buttons" style={{ justifyContent: 'center' }}>
                                                                 <button
                                                                     className="btn btn-primary btn-sm"
                                                                     onClick={() => handleConfirmEvent(ev.id)}

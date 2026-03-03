@@ -69,12 +69,23 @@ export default function DashboardPage() {
             // 候補日イベントのユーザーごとの回答状況
             const candidateEventIds = candidateEvents.map(d => d.id)
             if (candidateEventIds.length > 0) {
+                const candidateEventData = candidateEvents.map(d => ({ id: d.id, ...d.data() }))
                 const shiftsSnapshot = await getDocs(collection(db, 'shifts'))
                 const shifts = shiftsSnapshot.docs.map(d => d.data())
                 const userStatus = users.map(u => {
-                    const userShifts = shifts.filter(s => candidateEventIds.includes(s.eventId) && s.userId === u.id)
-                    const available = userShifts.filter(s => s.status === 'available').length
-                    const unavailable = userShifts.filter(s => s.status === 'unavailable').length
+                    let available = 0
+                    let unavailable = 0
+                    for (const eventId of candidateEventIds) {
+                        const shift = shifts.find(s => s.eventId === eventId && s.userId === u.id)
+                        if (shift) {
+                            if (shift.status === 'available') available++
+                            else if (shift.status === 'unavailable') unavailable++
+                        } else {
+                            // 提案者（createdBy）は自動出席扱い
+                            const event = candidateEventData.find(e => e.id === eventId)
+                            if (event?.createdBy === u.id) available++
+                        }
+                    }
                     const unresponded = candidateEventIds.length - available - unavailable
                     return { name: u.displayName || '不明', available, unavailable, unresponded }
                 })

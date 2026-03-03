@@ -1263,6 +1263,42 @@ tr:hover {
   animation: slideUp var(--transition-slow) ease;
 }
 
+/* ---------- FeedbacksPage Card Layout ---------- */
+.feedback-card {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  gap: 32px;
+}
+
+.feedback-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  cursor: pointer;
+}
+
+.feedback-card-columns {
+  display: flex;
+  align-items: flex-start;
+}
+
+.feedback-card-meta {
+  flex: 0 0 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feedback-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 24px;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
   .main-content {
@@ -1294,9 +1330,134 @@ tr:hover {
   }
 }
 
-@media (max-width: 640px) {
+/* ===== モバイル（768px以下） ===== */
+@media (max-width: 768px) {
+
+  /* ---- 余白・レイアウト ---- */
+  .main-content {
+    padding: var(--space-md);
+    padding-top: calc(var(--header-height) + var(--space-md));
+  }
+
+  .sticky-header {
+    margin-top: calc(var(--space-md) * -1);
+    padding-top: var(--space-md);
+    padding-bottom: var(--space-sm);
+  }
+
+  .page-header {
+    margin-bottom: var(--space-lg);
+  }
+
+  /* ページヘッダーのタイトル+ボタンを縦積み */
+  .page-header .flex.justify-between,
+  .page-header .flex.items-center.justify-between {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  /* ---- タイポグラフィ ---- */
+  .page-title {
+    font-size: 1.4rem;
+  }
+
+  /* ---- 統計グリッド ---- */
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  .stat-card {
+    padding: var(--space-md);
+  }
+
+  /* ---- 検索バー ---- */
+  .search-bar {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* ---- テーブルセルの余白縮小 ---- */
+  th, td {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  /* ---- カレンダー ---- */
+  .calendar-day {
+    min-height: 56px;
+    padding: 4px;
+  }
+
+  .calendar-event-dot {
+    font-size: 0.6rem;
+    padding: 0 4px;
+  }
+
+  /* ---- モーダル ---- */
+  .modal-overlay {
+    padding: var(--space-sm);
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+
+  /* ---- タッチターゲット確保 ---- */
+  .btn {
+    min-height: 40px;
+  }
+
+  /* ---- FeedbacksPage フィードバックカード ---- */
+  .feedback-card {
+    flex-direction: column;
+    padding: var(--space-md);
+    gap: var(--space-md);
+    align-items: stretch;
+  }
+
+  .feedback-card-columns {
+    flex-direction: column;
+  }
+
+  .feedback-card-meta {
+    flex: none;
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: var(--space-md);
+  }
+
+  .feedback-card-content {
+    padding-right: 0;
+  }
+
+  /* ---- ShiftsPage 出欠操作ボタン ---- */
+  .vote-action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .vote-action-buttons .btn {
+    width: 100%;
+    font-size: 0.75rem;
+    min-height: 36px;
+  }
+
+  /* ---- タブバー ---- */
+  .tab-btn {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+}
+
+/* ===== 小型スマートフォン（480px以下） ===== */
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .gallery-grid {
