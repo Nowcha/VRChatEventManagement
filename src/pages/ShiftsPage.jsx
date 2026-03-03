@@ -161,12 +161,14 @@ export default function ShiftsPage() {
     }
 
     const getVoteSummary = (eventId) => {
+        const ev = events.find(e => e.id === eventId)
         const eventShifts = shifts.filter(s => s.eventId === eventId)
+        const proposerAutoAvailable = ev?.createdBy && !eventShifts.find(s => s.userId === ev.createdBy)
         return {
-            available: eventShifts.filter(s => s.status === 'available').length,
+            available: eventShifts.filter(s => s.status === 'available').length + (proposerAutoAvailable ? 1 : 0),
             unavailable: eventShifts.filter(s => s.status === 'unavailable').length,
             total: allUsers.length,
-            responded: eventShifts.length,
+            responded: eventShifts.length + (proposerAutoAvailable ? 1 : 0),
             details: eventShifts.map(s => ({
                 ...s,
                 userName: allUsers.find(u => u.id === s.userId)?.displayName || '不明'
@@ -178,18 +180,51 @@ export default function ShiftsPage() {
     //  ③ 開催日決定
     // ============================
     const handleConfirmEvent = async (eventId) => {
+        if (!window.confirm('この日程を開催確定にしますか？')) return
         try {
+            const event = events.find(e => e.id === eventId)
+            const snapshot = allUsers.map(u => ({
+                userId: u.id,
+                userName: u.displayName,
+                status: (event?.createdBy === u.id && !shifts.find(s => s.eventId === eventId && s.userId === u.id))
+                    ? 'available'
+                    : shifts.find(s => s.eventId === eventId && s.userId === u.id)?.status || 'no_response'
+            }))
+
             const batch = writeBatch(db)
-            batch.update(doc(db, 'events', eventId), { status: 'confirmed' })
+            batch.update(doc(db, 'events', eventId), { status: 'confirmed', voteSnapshot: snapshot })
 
             const eventShifts = shifts.filter(s => s.eventId === eventId && s.status === 'available')
             for (const s of eventShifts) {
                 batch.update(doc(db, 'shifts', s.id), { status: 'confirmed' })
             }
+            // createdBy が未投票なら confirmed シフトとして追加
+            if (event?.createdBy && !shifts.find(s => s.eventId === eventId && s.userId === event.createdBy)) {
+                const newRef = doc(collection(db, 'shifts'))
+                batch.set(newRef, { eventId, userId: event.createdBy, status: 'confirmed' })
+            }
             await batch.commit()
             await loadData()
         } catch (error) {
             console.error('開催確定エラー:', error)
+        }
+    }
+
+    const handleCancelEvent = async (eventId) => {
+        if (!window.confirm('この日程を不開催にしますか？調整データは保存されます。')) return
+        try {
+            const event = events.find(e => e.id === eventId)
+            const snapshot = allUsers.map(u => ({
+                userId: u.id,
+                userName: u.displayName,
+                status: (event?.createdBy === u.id && !shifts.find(s => s.eventId === eventId && s.userId === u.id))
+                    ? 'available'
+                    : shifts.find(s => s.eventId === eventId && s.userId === u.id)?.status || 'no_response'
+            }))
+            await updateDoc(doc(db, 'events', eventId), { status: 'cancelled', voteSnapshot: snapshot })
+            await loadData()
+        } catch (error) {
+            console.error('不開催更新エラー:', error)
         }
     }
 
@@ -248,6 +283,23 @@ export default function ShiftsPage() {
             await loadData()
         } catch (error) {
             console.error('イベント削除エラー:', error)
+        }
+    }
+
+    const handleRevertToCandidate = async (eventId) => {
+        if (!window.confirm('このイベントを調整中（候補）に戻しますか？')) return
+        try {
+            const batch = writeBatch(db)
+            batch.update(doc(db, 'events', eventId), { status: 'candidate', voteSnapshot: [] })
+            const confirmedShifts = shifts.filter(s => s.eventId === eventId && s.status === 'confirmed')
+            for (const s of confirmedShifts) {
+                batch.update(doc(db, 'shifts', s.id), { status: 'available' })
+            }
+            await batch.commit()
+            setShowEventDetail(null)
+            await loadData()
+        } catch (error) {
+            console.error('候補に戻すエラー:', error)
         }
     }
 
@@ -403,6 +455,33 @@ export default function ShiftsPage() {
                         </div>
                     </div>
 
+                    {/* 不開催履歴 */}
+                    {events.filter(e => e.status === 'cancelled').length > 0 && (
+                        <div className="mt-lg">
+                            <p className="text-sm text-muted mb-md">不開催履歴</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {events
+                                    .filter(e => e.status === 'cancelled')
+                                    .sort((a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0))
+                                    .map(ev => (
+                                        <div
+                                            key={ev.id}
+                                            onClick={() => openEventDetail(ev)}
+                                            style={{
+                                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                padding: '8px 12px', borderRadius: '6px',
+                                                border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.6
+                                            }}
+                                        >
+                                            <span className="text-sm" style={{ textDecoration: 'line-through' }}>
+                                                {formatFullDate(ev.date)} {ev.timeSlot}
+                                            </span>
+                                            <span className="badge" style={{ background: 'var(--bg-glass)', color: 'var(--text-tertiary)', textDecoration: 'none' }}>不開催</span>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -591,6 +670,7 @@ export default function ShiftsPage() {
                                                         {allUsers.map(u => {
                                                             const vote = shifts.find(s => s.eventId === ev.id && s.userId === u.id)
                                                             const isMe = u.id === user.uid
+                                                            const isProposerAutoAvailable = u.id === ev.createdBy && !vote
                                                             return (
                                                                 <td key={u.id} style={{ textAlign: 'center' }}>
                                                                     {isMe ? (
@@ -612,6 +692,8 @@ export default function ShiftsPage() {
                                                                                 ✕
                                                                             </button>
                                                                         </div>
+                                                                    ) : isProposerAutoAvailable ? (
+                                                                        <span title="提案者のため自動出席" style={{ fontSize: '1.2rem', color: 'var(--color-black)', opacity: 0.4 }}>○</span>
                                                                     ) : (
                                                                         <span style={{
                                                                             fontSize: '1.2rem',
@@ -645,14 +727,21 @@ export default function ShiftsPage() {
                                                                 <button
                                                                     className="btn btn-primary btn-sm"
                                                                     onClick={() => handleConfirmEvent(ev.id)}
-                                                                    title="開催決定"
+                                                                    title="開催確定"
                                                                 >
-                                                                    決定
+                                                                    開催
+                                                                </button>
+                                                                <button
+                                                                    className="btn btn-secondary btn-sm"
+                                                                    onClick={() => handleCancelEvent(ev.id)}
+                                                                    title="不開催（データ保存）"
+                                                                >
+                                                                    不開催
                                                                 </button>
                                                                 <button
                                                                     className="btn btn-danger btn-sm"
                                                                     onClick={() => handleCancelCandidate(ev.id)}
-                                                                    title="候補削除"
+                                                                    title="完全削除"
                                                                 >
                                                                     削除
                                                                 </button>
@@ -718,36 +807,53 @@ export default function ShiftsPage() {
                             {/* ステータス */}
                             <div className="mb-lg">
                                 <p className="text-sm text-muted mb-md">ステータス</p>
-                                <span className={`badge ${showEventDetail.status === 'confirmed' ? 'badge-confirmed' : 'badge-unwritten'}`}>
-                                    {showEventDetail.status === 'confirmed' ? '開催確定' : '候補'}
+                                <span className={`badge ${showEventDetail.status === 'confirmed' ? 'badge-confirmed' : showEventDetail.status === 'cancelled' ? 'badge-posted' : 'badge-unwritten'}`}>
+                                    {showEventDetail.status === 'confirmed' ? '開催確定' : showEventDetail.status === 'cancelled' ? '不開催' : '候補'}
                                 </span>
                             </div>
 
-                            {/* シフト状況 */}
-                            <div className="mb-lg">
-                                <p className="text-sm text-muted mb-md">出勤メンバー</p>
-                                {getShiftsForEvent(showEventDetail.id).length > 0 ? (
-                                    getShiftsForEvent(showEventDetail.id).map(s => (
-                                        <div key={s.id} style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            padding: '8px 0',
-                                            borderBottom: '1px solid var(--border-subtle)'
+                            {/* 調整時の回答状況（スナップショット） */}
+                            {showEventDetail.voteSnapshot && showEventDetail.voteSnapshot.length > 0 ? (
+                                <div className="mb-lg">
+                                    <p className="text-sm text-muted mb-md">調整時の回答状況</p>
+                                    {showEventDetail.voteSnapshot.map(v => (
+                                        <div key={v.userId} style={{
+                                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                            padding: '8px 0', borderBottom: '1px solid var(--border-subtle)'
                                         }}>
-                                            <span className="text-sm">{s.userName}</span>
-                                            <span className={`badge badge-${s.status}`}>
-                                                {s.status === 'available' ? '出勤可' : s.status === 'unavailable' ? '欠勤' : '確定'}
+                                            <span className="text-sm">{v.userName}</span>
+                                            <span style={{
+                                                fontSize: '1.1rem',
+                                                color: v.status === 'available' ? 'var(--color-black)' : v.status === 'unavailable' ? 'var(--color-dark-gray)' : 'var(--text-tertiary)'
+                                            }}>
+                                                {v.status === 'available' ? '○' : v.status === 'unavailable' ? '✕' : '—'}
                                             </span>
                                         </div>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-muted">まだ回答がありません</p>
-                                )}
-                            </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="mb-lg">
+                                    <p className="text-sm text-muted mb-md">出勤メンバー</p>
+                                    {getShiftsForEvent(showEventDetail.id).length > 0 ? (
+                                        getShiftsForEvent(showEventDetail.id).map(s => (
+                                            <div key={s.id} style={{
+                                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                padding: '8px 0', borderBottom: '1px solid var(--border-subtle)'
+                                            }}>
+                                                <span className="text-sm">{s.userName}</span>
+                                                <span className={`badge badge-${s.status}`}>
+                                                    {s.status === 'available' ? '出勤可' : s.status === 'unavailable' ? '欠勤' : '確定'}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-muted">まだ回答がありません</p>
+                                    )}
+                                </div>
+                            )}
 
-                            {/* 自分の出欠 */}
-                            <div className="mb-lg">
+                            {/* 自分の出欠（確定・不開催後は非表示） */}
+                            {showEventDetail.status === 'candidate' && <div className="mb-lg">
                                 <p className="text-sm text-muted mb-md">あなたの出勤</p>
                                 <div className="flex gap-sm">
                                     <button
@@ -763,15 +869,22 @@ export default function ShiftsPage() {
                                         ✕ 欠勤
                                     </button>
                                 </div>
-                            </div>
+                            </div>}
                         </div>
                         <div className="modal-footer">
                             <button className="btn btn-danger btn-sm" onClick={() => handleDeleteEvent(showEventDetail.id)}>
                                 削除
                             </button>
-                            <button className="btn btn-primary btn-sm" onClick={handleUpdateEvent}>
-                                保存
-                            </button>
+                            <div className="flex gap-sm">
+                                {(showEventDetail.status === 'confirmed' || showEventDetail.status === 'cancelled') && (
+                                    <button className="btn btn-secondary btn-sm" onClick={() => handleRevertToCandidate(showEventDetail.id)}>
+                                        候補に戻す
+                                    </button>
+                                )}
+                                <button className="btn btn-primary btn-sm" onClick={handleUpdateEvent}>
+                                    保存
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
