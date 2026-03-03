@@ -1263,6 +1263,54 @@ tr:hover {
   animation: slideUp var(--transition-slow) ease;
 }
 
+/* ---------- Customer Mobile Cards ---------- */
+.customer-cards {
+  display: none;
+}
+
+.customer-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  backdrop-filter: blur(12px);
+  transition: all var(--transition-normal);
+}
+
+.customer-card-name {
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.customer-card-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.customer-card-icon-btn:hover {
+  background: var(--bg-glass);
+  color: var(--text-primary);
+}
+
+.customer-card-icon-btn.danger {
+  color: var(--color-error);
+}
+
+.customer-card-icon-btn.danger:hover {
+  background: rgba(220, 50, 50, 0.1);
+}
+
 /* ---------- FeedbacksPage Card Layout ---------- */
 .feedback-card {
   display: flex;
@@ -1385,13 +1433,20 @@ tr:hover {
 
   /* ---- カレンダー ---- */
   .calendar-day {
-    min-height: 56px;
+    min-height: 88px;
     padding: 4px;
+    overflow: hidden;
   }
 
   .calendar-event-dot {
-    font-size: 0.6rem;
-    padding: 0 4px;
+    font-size: 0.65rem;
+    padding: 2px 4px;
+    flex-direction: row;
+  }
+
+  /* スタッフ名を非表示（時間帯のみ表示） */
+  .calendar-event-dot span + span {
+    display: none;
   }
 
   /* ---- モーダル ---- */
@@ -1410,6 +1465,12 @@ tr:hover {
   /* ---- タッチターゲット確保 ---- */
   .btn {
     min-height: 40px;
+  }
+
+  /* ---- FeedbacksPage フィルター折り返し ---- */
+  .feedback-status-filter {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
   }
 
   /* ---- FeedbacksPage フィードバックカード ---- */
@@ -1435,6 +1496,14 @@ tr:hover {
     padding-right: 0;
   }
 
+  /* フィードバックカード内テキストのフォントサイズ縮小 */
+  .feedback-card-meta span,
+  .feedback-card-content span,
+  .feedback-card-content > div,
+  .feedback-card-body > div:first-child {
+    font-size: 0.875rem !important;
+  }
+
   /* ---- ShiftsPage 出欠操作ボタン ---- */
   .vote-action-buttons {
     flex-direction: column;
@@ -1451,6 +1520,17 @@ tr:hover {
   .tab-btn {
     font-size: 0.8rem;
     padding: 6px 10px;
+  }
+
+  /* ---- 顧客管理 テーブル/カード切り替え ---- */
+  .customer-table {
+    display: none;
+  }
+
+  .customer-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 }
 

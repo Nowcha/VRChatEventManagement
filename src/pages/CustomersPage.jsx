@@ -203,74 +203,119 @@ export default function CustomersPage() {
                 </div>
             </div>
 
-            {/* 顧客テーブル */}
+            {/* 顧客テーブル / カードビュー */}
             {filteredCustomers.length > 0 ? (
-                <div className="table-container" style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 260px)' }}>
-                    <table style={{ tableLayout: 'fixed', width: '100%' }}>
-                        <colgroup>
-                            <col style={{ width: '15%' }} />
-                            <col style={{ width: '12%' }} />
-                            <col style={{ width: '8%' }} />
-                            <col style={{ width: '12%' }} />
-                            <col style={{ width: '35%' }} />
-                            <col style={{ width: '18%' }} />
-                        </colgroup>
-                        <thead className="sticky-thead">
-                            <tr>
-                                <th style={{ textTransform: 'none', cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('vrchatName')}>
-                                    VRChat表示名<SortIcon col="vrchatName" />
-                                </th>
-                                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('firstVisitDate')}>
-                                    初来店日<SortIcon col="firstVisitDate" />
-                                </th>
-                                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('visitCount')}>
-                                    来店回数<SortIcon col="visitCount" />
-                                </th>
-                                <th>タグ</th>
-                                <th>備考</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {sortedCustomers.map(customer => (
-                                <tr key={customer.id}>
-                                    <td>
-                                        <span
-                                            style={{ cursor: 'pointer', color: 'var(--text-accent)' }}
-                                            onClick={() => setSelectedCustomer(customer)}
-                                        >
-                                            {customer.vrchatName}
-                                        </span>
-                                    </td>
-                                    <td>{formatDate(customer.firstVisitDate)}</td>
-                                    <td>{customer.visitCount || 0}</td>
-                                    <td>
-                                        <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
-                                            {(customer.tags || []).map(tag => (
-                                                <span key={tag} className="tag">{tag}</span>
-                                            ))}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span className="text-sm" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={customer.notes || ''}>
-                                            {customer.notes || '-'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="flex gap-sm">
-                                            <button className="btn btn-ghost btn-sm" onClick={() => openEditModal(customer)}>
-                                                編集
-                                            </button>
-                                            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(customer.id)}>
-                                                削除
-                                            </button>
-                                        </div>
-                                    </td>
+                <>
+                    {/* PC：テーブル */}
+                    <div className="table-container customer-table" style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 260px)' }}>
+                        <table style={{ tableLayout: 'fixed', width: '100%' }}>
+                            <colgroup>
+                                <col style={{ width: '15%' }} />
+                                <col style={{ width: '12%' }} />
+                                <col style={{ width: '8%' }} />
+                                <col style={{ width: '12%' }} />
+                                <col style={{ width: '35%' }} />
+                                <col style={{ width: '18%' }} />
+                            </colgroup>
+                            <thead className="sticky-thead">
+                                <tr>
+                                    <th style={{ textTransform: 'none', cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('vrchatName')}>
+                                        VRChat表示名<SortIcon col="vrchatName" />
+                                    </th>
+                                    <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('firstVisitDate')}>
+                                        初来店日<SortIcon col="firstVisitDate" />
+                                    </th>
+                                    <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('visitCount')}>
+                                        来店回数<SortIcon col="visitCount" />
+                                    </th>
+                                    <th>タグ</th>
+                                    <th>備考</th>
+                                    <th>操作</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {sortedCustomers.map(customer => (
+                                    <tr key={customer.id}>
+                                        <td>
+                                            <span
+                                                style={{ cursor: 'pointer', color: 'var(--text-accent)' }}
+                                                onClick={() => setSelectedCustomer(customer)}
+                                            >
+                                                {customer.vrchatName}
+                                            </span>
+                                        </td>
+                                        <td>{formatDate(customer.firstVisitDate)}</td>
+                                        <td>{customer.visitCount || 0}</td>
+                                        <td>
+                                            <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
+                                                {(customer.tags || []).map(tag => (
+                                                    <span key={tag} className="tag">{tag}</span>
+                                                ))}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className="text-sm" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={customer.notes || ''}>
+                                                {customer.notes || '-'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="flex gap-sm">
+                                                <button className="btn btn-ghost btn-sm" onClick={() => openEditModal(customer)}>
+                                                    編集
+                                                </button>
+                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(customer.id)}>
+                                                    削除
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* モバイル：カードビュー */}
+                    <div className="customer-cards">
+                        {sortedCustomers.map(customer => (
+                            <div key={customer.id} className="customer-card">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                    <span className="customer-card-name" onClick={() => setSelectedCustomer(customer)}>
+                                        {customer.vrchatName}
+                                    </span>
+                                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                                        <button className="customer-card-icon-btn" onClick={() => openEditModal(customer)} title="編集">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                            </svg>
+                                        </button>
+                                        <button className="customer-card-icon-btn danger" onClick={() => handleDelete(customer.id)} title="削除">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="3 6 5 6 21 6" />
+                                                <path d="M19 6l-1 14H6L5 6" />
+                                                <path d="M10 11v6M14 11v6" />
+                                                <path d="M9 6V4h6v2" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '2px' }}>
+                                    初来店日: {formatDate(customer.firstVisitDate)}
+                                </div>
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: (customer.tags || []).length ? '8px' : '0' }}>
+                                    来店回数: {customer.visitCount || 0}
+                                </div>
+                                {(customer.tags || []).length > 0 && (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                        {(customer.tags || []).map(tag => (
+                                            <span key={tag} className="tag">{tag}</span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </>
             ) : (
                 <div className="empty-state">
                     <div className="empty-state-icon">♦</div>

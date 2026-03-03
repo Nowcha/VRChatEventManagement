@@ -300,7 +300,7 @@ export default function FeedbacksPage() {
 
                 {/* フィルタ */}
                 <div className="flex gap-md" style={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div className="flex gap-sm items-center">
+                    <div className="flex gap-sm items-center feedback-status-filter">
                         {/* ステータスフィルタ */}
                         <div className="flex gap-sm">
                             {[
