@@ -116,7 +116,9 @@ export default function ShiftsPage() {
             for (const dateStr of dates) {
                 const timeSlots = proposeDates[dateStr]
                 for (const ts of timeSlots) {
-                    const dateTime = new Date(`${dateStr}T${ts === '24:00' ? '00:00' : ts}`)
+                    const dateTime = ts === '24:00'
+                        ? new Date(`${dateStr}T00:00`)
+                        : new Date(`${dateStr}T${ts}`)
                     await addDoc(collection(db, 'events'), {
                         date: Timestamp.fromDate(dateTime),
                         timeSlot: ts,
@@ -257,8 +259,15 @@ export default function ShiftsPage() {
     const handleUpdateEvent = async () => {
         if (!showEventDetail) return
         try {
+            const storedDate = showEventDetail.date
+            const baseDate = new Date(storedDate.getFullYear(), storedDate.getMonth(), storedDate.getDate())
+            const newDateTime = editTimeSlot === '24:00'
+                ? new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), 0, 0, 0)
+                : new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(),
+                    parseInt(editTimeSlot.split(':')[0]), parseInt(editTimeSlot.split(':')[1]), 0)
             await updateDoc(doc(db, 'events', showEventDetail.id), {
                 timeSlot: editTimeSlot,
+                date: Timestamp.fromDate(newDateTime),
                 memo: editMemo
             })
             setShowEventDetail(null)
@@ -812,11 +821,32 @@ export default function ShiftsPage() {
                                 </span>
                             </div>
 
-                            {/* 調整時の回答状況（スナップショット） */}
-                            {showEventDetail.voteSnapshot && showEventDetail.voteSnapshot.length > 0 ? (
-                                <div className="mb-lg">
-                                    <p className="text-sm text-muted mb-md">調整時の回答状況</p>
-                                    {showEventDetail.voteSnapshot.map(v => (
+                            {/* 出勤メンバー（確定後は現在の状態を表示） */}
+                            <div className="mb-lg">
+                                <p className="text-sm text-muted mb-md">
+                                    {showEventDetail.status === 'confirmed' ? '出勤メンバー' : '調整時の回答状況'}
+                                </p>
+                                {showEventDetail.status === 'confirmed' ? (
+                                    getShiftsForEvent(showEventDetail.id).length > 0 ? (
+                                        getShiftsForEvent(showEventDetail.id).map(s => (
+                                            <div key={s.id} style={{
+                                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                padding: '8px 0', borderBottom: '1px solid var(--border-subtle)'
+                                            }}>
+                                                <span className="text-sm">{s.userName}</span>
+                                                <span style={{
+                                                    fontSize: '1.1rem',
+                                                    color: (s.status === 'confirmed' || s.status === 'available') ? 'var(--color-black)' : s.status === 'unavailable' ? 'var(--color-dark-gray)' : 'var(--text-tertiary)'
+                                                }}>
+                                                    {(s.status === 'confirmed' || s.status === 'available') ? '○' : s.status === 'unavailable' ? '✕' : '—'}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-muted">まだ回答がありません</p>
+                                    )
+                                ) : showEventDetail.voteSnapshot && showEventDetail.voteSnapshot.length > 0 ? (
+                                    showEventDetail.voteSnapshot.map(v => (
                                         <div key={v.userId} style={{
                                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                             padding: '8px 0', borderBottom: '1px solid var(--border-subtle)'
@@ -829,47 +859,53 @@ export default function ShiftsPage() {
                                                 {v.status === 'available' ? '○' : v.status === 'unavailable' ? '✕' : '—'}
                                             </span>
                                         </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="mb-lg">
-                                    <p className="text-sm text-muted mb-md">出勤メンバー</p>
-                                    {getShiftsForEvent(showEventDetail.id).length > 0 ? (
+                                    ))
+                                ) : (
+                                    getShiftsForEvent(showEventDetail.id).length > 0 ? (
                                         getShiftsForEvent(showEventDetail.id).map(s => (
                                             <div key={s.id} style={{
                                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                                 padding: '8px 0', borderBottom: '1px solid var(--border-subtle)'
                                             }}>
                                                 <span className="text-sm">{s.userName}</span>
-                                                <span className={`badge badge-${s.status}`}>
-                                                    {s.status === 'available' ? '出勤可' : s.status === 'unavailable' ? '欠勤' : '確定'}
+                                                <span style={{
+                                                    fontSize: '1.1rem',
+                                                    color: s.status === 'available' ? 'var(--color-black)' : s.status === 'unavailable' ? 'var(--color-dark-gray)' : 'var(--text-tertiary)'
+                                                }}>
+                                                    {s.status === 'available' ? '○' : s.status === 'unavailable' ? '✕' : '—'}
                                                 </span>
                                             </div>
                                         ))
                                     ) : (
                                         <p className="text-sm text-muted">まだ回答がありません</p>
-                                    )}
-                                </div>
-                            )}
+                                    )
+                                )}
+                            </div>
 
-                            {/* 自分の出欠（確定・不開催後は非表示） */}
-                            {showEventDetail.status === 'candidate' && <div className="mb-lg">
-                                <p className="text-sm text-muted mb-md">あなたの出勤</p>
-                                <div className="flex gap-sm">
-                                    <button
-                                        className={`btn btn-sm ${getMyVote(showEventDetail.id) === 'available' ? 'btn-primary' : 'btn-secondary'}`}
-                                        onClick={() => handleShiftUpdate(showEventDetail.id, 'available')}
-                                    >
-                                        ○ 出勤可
-                                    </button>
-                                    <button
-                                        className={`btn btn-sm ${getMyVote(showEventDetail.id) === 'unavailable' ? 'btn-danger' : 'btn-secondary'}`}
-                                        onClick={() => handleShiftUpdate(showEventDetail.id, 'unavailable')}
-                                    >
-                                        ✕ 欠勤
-                                    </button>
-                                </div>
-                            </div>}
+                            {/* 自分の出欠（候補・確定は変更可、不開催は非表示） */}
+                            {(showEventDetail.status === 'candidate' || showEventDetail.status === 'confirmed') && (() => {
+                                const myVote = getMyVote(showEventDetail.id)
+                                const isAttending = myVote === 'available' || myVote === 'confirmed'
+                                return (
+                                    <div className="mb-lg">
+                                        <p className="text-sm text-muted mb-md">あなたの出勤</p>
+                                        <div className="flex gap-sm">
+                                            <button
+                                                className={`btn btn-sm ${isAttending ? 'btn-primary' : 'btn-secondary'}`}
+                                                onClick={() => handleShiftUpdate(showEventDetail.id, 'available')}
+                                            >
+                                                ○ 出勤
+                                            </button>
+                                            <button
+                                                className={`btn btn-sm ${myVote === 'unavailable' ? 'btn-danger' : 'btn-secondary'}`}
+                                                onClick={() => handleShiftUpdate(showEventDetail.id, 'unavailable')}
+                                            >
+                                                ✕ 欠勤
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            })()}
                         </div>
                         <div className="modal-footer">
                             <button className="btn btn-danger btn-sm" onClick={() => handleDeleteEvent(showEventDetail.id)}>

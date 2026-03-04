@@ -27,15 +27,27 @@ export default function DashboardPage() {
         try {
             // 統計情報の取得
             const now = Timestamp.now()
+            const nowMs = now.toDate().getTime()
 
-            // 今後のイベント数（全件取得してステータスで分類）
+            // 24:00イベントはラベル日の00:00として保存されるため、1日前から取得してクライアント側でフィルタ
+            const oneDayAgo = new Date(nowMs - 24 * 60 * 60 * 1000)
             const eventsQuery = query(
                 collection(db, 'events'),
-                where('date', '>=', now),
+                where('date', '>=', Timestamp.fromDate(oneDayAgo)),
                 orderBy('date', 'asc')
             )
             const eventsSnapshot = await getDocs(eventsQuery)
+
+            // 24:00イベントの実効時刻 = 保存date + 24h（翌日0時として扱う）
+            const getEffectiveMs = (data) => {
+                const dateMs = data.date?.toDate().getTime() || 0
+                return data.timeSlot === '24:00' ? dateMs + 24 * 60 * 60 * 1000 : dateMs
+            }
+
+            // 実効時刻が現在以降のもののみ抽出し、実効時刻でソート
             const allUpcoming = eventsSnapshot.docs
+                .filter(d => getEffectiveMs(d.data()) >= nowMs)
+                .sort((a, b) => getEffectiveMs(a.data()) - getEffectiveMs(b.data()))
 
             // 確定済みイベント
             const confirmedEvents = allUpcoming.filter(d => d.data().status === 'confirmed')
@@ -172,7 +184,7 @@ export default function DashboardPage() {
                     {nextEvent ? (
                         <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-light)', fontSize: '0.85rem' }}>
                             <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>次回: {nextEvent.title}</div>
-                            <div style={{ color: 'var(--text-tertiary)' }}>{formatDate(nextEvent.date)} {formatTime(nextEvent.date)}</div>
+                            <div style={{ color: 'var(--text-tertiary)' }}>{formatDate(nextEvent.date)} {nextEvent.timeSlot || formatTime(nextEvent.date)}</div>
                         </div>
                     ) : (
                         <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-light)', fontSize: '0.85rem' }}>
