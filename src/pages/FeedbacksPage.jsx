@@ -86,6 +86,11 @@ export default function FeedbacksPage() {
         setShowModal(true)
     }
 
+    const closeModal = () => {
+        setShowModal(false)
+        setCustomerSearchText('')
+    }
+
     const openEditModal = (fb) => {
         setEditingFeedback(fb)
         const hasManualInput = !fb.eventId && fb.eventManualInput
@@ -143,7 +148,7 @@ export default function FeedbacksPage() {
                 })
             }
 
-            setShowModal(false)
+            closeModal()
             loadData()
         } catch (error) {
             console.error('感想保存エラー:', error)
@@ -155,7 +160,7 @@ export default function FeedbacksPage() {
         if (!window.confirm('この感想を削除しますか？')) return
         try {
             await deleteDoc(doc(db, 'feedbacks', editingFeedback.id))
-            setShowModal(false)
+            closeModal()
             loadData()
         } catch (error) {
             console.error('削除エラー:', error)
@@ -211,7 +216,7 @@ export default function FeedbacksPage() {
     }).sort((a, b) => {
         const dateA = getEventDateObj(a.eventId, a.eventManualInput).getTime();
         const dateB = getEventDateObj(b.eventId, b.eventManualInput).getTime();
-        return dateA - dateB;
+        return statusFilter === 'posted' ? dateB - dateA : dateA - dateB;
     })
 
     const toggleSelection = (id) => {
@@ -472,7 +477,7 @@ export default function FeedbacksPage() {
                             <h3 className="modal-title">
                                 {editingFeedback ? '感想の編集' : '感想入力'}
                             </h3>
-                            <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+                            <button className="modal-close" onClick={() => closeModal()}>✕</button>
                         </div>
                         <form onSubmit={handleSubmit}>
                             <div className="modal-body">
@@ -634,7 +639,7 @@ export default function FeedbacksPage() {
                                     </button>
                                 )}
                                 <div className="flex gap-sm">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                                    <button type="button" className="btn btn-secondary" onClick={() => closeModal()}>
                                         キャンセル
                                     </button>
                                     <button type="submit" className="btn btn-primary">

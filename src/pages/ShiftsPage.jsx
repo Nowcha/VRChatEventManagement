@@ -75,7 +75,6 @@ export default function ShiftsPage() {
         })
     }
 
-    const confirmedEvents = events.filter(e => e.status === 'confirmed')
     const candidateEvents = events.filter(e => e.status === 'candidate')
 
     // ============================
@@ -370,9 +369,9 @@ export default function ShiftsPage() {
             {/* タブ切り替え */}
             <div className="flex gap-sm mb-lg" style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
                 {[
-                    { key: 'calendar', icon: '📅', label: 'カレンダー', count: confirmedEvents.length },
+                    { key: 'calendar', icon: '📅', label: 'カレンダー' },
                     { key: 'propose', icon: '📝', label: '候補日提案' },
-                    { key: 'vote', icon: '🗳', label: '出欠入力', count: candidateEvents.length }
+                    { key: 'vote', icon: '🗳', label: '出欠入力' }
                 ].map(tab => (
                     <button
                         key={tab.key}
