@@ -163,7 +163,7 @@ export default function ShiftsPage() {
 
     const getVoteSummary = (eventId) => {
         const ev = events.find(e => e.id === eventId)
-        const eventShifts = shifts.filter(s => s.eventId === eventId)
+        const eventShifts = shifts.filter(s => s.eventId === eventId && allUsers.some(u => u.id === s.userId))
         const proposerAutoAvailable = ev?.createdBy && !eventShifts.find(s => s.userId === ev.createdBy)
         return {
             available: eventShifts.filter(s => s.status === 'available').length + (proposerAutoAvailable ? 1 : 0),
