@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, query, orderBy, getDocs, addDoc, updateDoc, doc, Timestamp, writeBatch } from 'firebase/firestore'
+import { collection, query, orderBy, where, getDocs, addDoc, updateDoc, doc, Timestamp, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
@@ -140,9 +140,15 @@ export default function ShiftsPage() {
     // ============================
     const handleVote = async (eventId, status) => {
         try {
-            const existing = shifts.find(s => s.eventId === eventId && s.userId === user.uid)
-            if (existing) {
-                await updateDoc(doc(db, 'shifts', existing.id), { status })
+            const q = query(collection(db, 'shifts'), where('eventId', '==', eventId), where('userId', '==', user.uid))
+            const snapshot = await getDocs(q)
+            if (!snapshot.empty) {
+                // 重複レコードがある場合は最初の1件以外を削除してから更新
+                const [first, ...duplicates] = snapshot.docs
+                const batch = writeBatch(db)
+                duplicates.forEach(d => batch.delete(doc(db, 'shifts', d.id)))
+                batch.update(doc(db, 'shifts', first.id), { status })
+                await batch.commit()
             } else {
                 await addDoc(collection(db, 'shifts'), {
                     eventId,
@@ -163,7 +169,14 @@ export default function ShiftsPage() {
 
     const getVoteSummary = (eventId) => {
         const ev = events.find(e => e.id === eventId)
-        const eventShifts = shifts.filter(s => s.eventId === eventId && allUsers.some(u => u.id === s.userId))
+        const allEventShifts = shifts.filter(s => s.eventId === eventId && allUsers.some(u => u.id === s.userId))
+        // userId ごとに最初の1件のみ使用（重複レコード対策）
+        const seenUsers = new Set()
+        const eventShifts = allEventShifts.filter(s => {
+            if (seenUsers.has(s.userId)) return false
+            seenUsers.add(s.userId)
+            return true
+        })
         const proposerAutoAvailable = ev?.createdBy && !eventShifts.find(s => s.userId === ev.createdBy)
         return {
             available: eventShifts.filter(s => s.status === 'available').length + (proposerAutoAvailable ? 1 : 0),
