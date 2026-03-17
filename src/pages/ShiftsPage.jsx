@@ -343,10 +343,18 @@ export default function ShiftsPage() {
     }
 
     const getShiftsForEvent = (eventId) => {
-        return shifts.filter(s => s.eventId === eventId).map(s => ({
-            ...s,
-            userName: allUsers.find(u => u.id === s.userId)?.displayName || '不明'
-        }))
+        const seenUsers = new Set()
+        return shifts
+            .filter(s => s.eventId === eventId)
+            .filter(s => {
+                if (seenUsers.has(s.userId)) return false
+                seenUsers.add(s.userId)
+                return true
+            })
+            .map(s => ({
+                ...s,
+                userName: allUsers.find(u => u.id === s.userId)?.displayName || '不明'
+            }))
     }
 
     // ============================
