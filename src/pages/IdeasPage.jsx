@@ -4,6 +4,7 @@ import {
     query,
     orderBy,
     onSnapshot,
+    getDocs,
     addDoc,
     updateDoc,
     deleteDoc,
@@ -35,6 +36,14 @@ export default function IdeasPage() {
     const [editingId, setEditingId] = useState(null)
     const [editForm, setEditForm] = useState({ authorName: '', title: '', description: '' })
     const [saving, setSaving] = useState(false)
+    const [allUsers, setAllUsers] = useState([])
+
+    // ユーザー一覧取得
+    useEffect(() => {
+        getDocs(collection(db, 'users')).then(snap => {
+            setAllUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+        }).catch(err => console.error('ユーザー取得エラー:', err))
+    }, [])
 
     // Firestoreのリアルタイム購読
     useEffect(() => {
@@ -253,13 +262,17 @@ export default function IdeasPage() {
                                     <div className="idea-edit-form">
                                         <div className="form-group" style={{ marginBottom: 'var(--space-sm)' }}>
                                             <label className="form-label">作成者</label>
-                                            <input
+                                            <select
                                                 className="form-input"
-                                                type="text"
                                                 value={editForm.authorName}
                                                 onChange={e => setEditForm(f => ({ ...f, authorName: e.target.value }))}
-                                                maxLength={50}
-                                            />
+                                            >
+                                                {allUsers.map(u => (
+                                                    <option key={u.id} value={u.displayName || u.id}>
+                                                        {u.displayName || u.id}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <div className="form-group" style={{ marginBottom: 'var(--space-sm)' }}>
                                             <label className="form-label">アイデアタイトル <span style={{ color: 'var(--accent-pink)' }}>*</span></label>
