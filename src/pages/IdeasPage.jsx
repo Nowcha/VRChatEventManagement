@@ -31,6 +31,7 @@ export default function IdeasPage() {
     const [descInput, setDescInput] = useState('')
     const [posting, setPosting] = useState(false)
     const [deleteConfirmId, setDeleteConfirmId] = useState(null)
+    const [copiedId, setCopiedId] = useState(null)
 
     // Firestoreのリアルタイム購読
     useEffect(() => {
@@ -92,6 +93,25 @@ export default function IdeasPage() {
         } catch (error) {
             console.error('ステータス更新エラー:', error)
         }
+    }
+
+    // コピー
+    const handleCopy = (idea) => {
+        const text = `【プレオープン】${idea.title}【タイトルアイデア】`
+        navigator.clipboard.writeText(text).then(() => {
+            setCopiedId(idea.id)
+            setTimeout(() => setCopiedId(null), 2000)
+        }).catch(() => {
+            // clipboard API非対応環境のフォールバック
+            const el = document.createElement('textarea')
+            el.value = text
+            document.body.appendChild(el)
+            el.select()
+            document.execCommand('copy')
+            document.body.removeChild(el)
+            setCopiedId(idea.id)
+            setTimeout(() => setCopiedId(null), 2000)
+        })
     }
 
     // 削除
@@ -190,7 +210,7 @@ export default function IdeasPage() {
                     <p>{statusFilter === 'all' ? 'まだアイデアがありません。最初のアイデアを投稿しましょう！' : 'この条件のアイデアはありません。'}</p>
                 </div>
             ) : (
-                <div className="ideas-list">
+                <div className="ideas-grid">
                     {filtered.map(idea => {
                         const { label, className } = STATUS_LABELS[idea.status] || STATUS_LABELS.unused
                         const isAuthor = idea.authorId === user.uid
@@ -237,6 +257,13 @@ export default function IdeasPage() {
                                 {/* アクション */}
                                 <div className="idea-actions">
                                     <button
+                                        className={`btn idea-copy-btn ${copiedId === idea.id ? 'idea-copy-btn--copied' : ''}`}
+                                        onClick={() => handleCopy(idea)}
+                                        title="クリップボードにコピー"
+                                    >
+                                        {copiedId === idea.id ? '✓ コピー済' : '⧉ コピー'}
+                                    </button>
+                                    <button
                                         className={`btn idea-status-btn ${idea.status === 'used' ? 'idea-status-btn--revert' : 'idea-status-btn--use'}`}
                                         onClick={() => handleToggleStatus(idea)}
                                     >
@@ -281,3 +308,4 @@ export default function IdeasPage() {
         </div>
     )
 }
+

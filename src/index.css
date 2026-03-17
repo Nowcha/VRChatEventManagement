@@ -1659,10 +1659,23 @@ tr:hover {
   gap: var(--space-md);
 }
 
-.ideas-list {
-  display: flex;
-  flex-direction: column;
+.ideas-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-md);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .ideas-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .ideas-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .idea-card {
@@ -1819,6 +1832,24 @@ tr:hover {
   border-color: var(--color-red, #e53e3e);
   color: var(--color-red, #e53e3e);
   background: rgba(229, 62, 62, 0.08);
+}
+
+.idea-copy-btn {
+  font-size: 0.85rem;
+  padding: 6px 14px;
+  background: rgba(159, 122, 234, 0.12);
+  border: 1px solid rgba(159, 122, 234, 0.35);
+  color: #9f7aea;
+}
+
+.idea-copy-btn:hover {
+  background: rgba(159, 122, 234, 0.22);
+}
+
+.idea-copy-btn--copied {
+  background: rgba(72, 187, 120, 0.15);
+  border-color: rgba(72, 187, 120, 0.4);
+  color: #48bb78;
 }
 
 .idea-delete-confirm {
