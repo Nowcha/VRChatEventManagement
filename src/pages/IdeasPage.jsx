@@ -32,6 +32,9 @@ export default function IdeasPage() {
     const [posting, setPosting] = useState(false)
     const [deleteConfirmId, setDeleteConfirmId] = useState(null)
     const [copiedId, setCopiedId] = useState(null)
+    const [editingId, setEditingId] = useState(null)
+    const [editForm, setEditForm] = useState({ authorName: '', title: '', description: '' })
+    const [saving, setSaving] = useState(false)
 
     // Firestoreのリアルタイム購読
     useEffect(() => {
@@ -92,6 +95,35 @@ export default function IdeasPage() {
             await updateDoc(doc(db, 'ideas', idea.id), { status: next })
         } catch (error) {
             console.error('ステータス更新エラー:', error)
+        }
+    }
+
+    // 編集開始
+    const handleEditStart = (idea) => {
+        setEditingId(idea.id)
+        setEditForm({
+            authorName: idea.authorName,
+            title: idea.title,
+            description: idea.description || ''
+        })
+        setDeleteConfirmId(null)
+    }
+
+    // 編集保存
+    const handleEditSave = async (id) => {
+        if (!editForm.title.trim()) return
+        setSaving(true)
+        try {
+            await updateDoc(doc(db, 'ideas', id), {
+                authorName: editForm.authorName.trim() || 'Unknown',
+                title: editForm.title.trim(),
+                description: editForm.description.trim()
+            })
+            setEditingId(null)
+        } catch (error) {
+            console.error('編集保存エラー:', error)
+        } finally {
+            setSaving(false)
         }
     }
 
@@ -216,90 +248,158 @@ export default function IdeasPage() {
                         const isAuthor = idea.authorId === user.uid
                         return (
                             <div key={idea.id} className={`card idea-card ${idea.status === 'used' ? 'idea-card--used' : ''}`}>
-                                {/* カードヘッダー */}
-                                <div className="idea-card-header">
-                                    <div className="idea-card-meta">
-                                        <span className="idea-author">{idea.authorName}</span>
-                                        <span className="idea-date">{formatDate(idea.createdAt)}</span>
+                                {editingId === idea.id ? (
+                                    /* 編集モード */
+                                    <div className="idea-edit-form">
+                                        <div className="form-group" style={{ marginBottom: 'var(--space-sm)' }}>
+                                            <label className="form-label">作成者</label>
+                                            <input
+                                                className="form-input"
+                                                type="text"
+                                                value={editForm.authorName}
+                                                onChange={e => setEditForm(f => ({ ...f, authorName: e.target.value }))}
+                                                maxLength={50}
+                                            />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 'var(--space-sm)' }}>
+                                            <label className="form-label">アイデアタイトル <span style={{ color: 'var(--accent-pink)' }}>*</span></label>
+                                            <input
+                                                className="form-input"
+                                                type="text"
+                                                value={editForm.title}
+                                                onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                                                maxLength={100}
+                                            />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 'var(--space-md)' }}>
+                                            <label className="form-label">補足・メモ</label>
+                                            <textarea
+                                                className="form-input"
+                                                style={{ resize: 'vertical', minHeight: '64px' }}
+                                                value={editForm.description}
+                                                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                                                maxLength={300}
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                                            <button
+                                                className="btn btn--primary"
+                                                style={{ fontSize: '0.85rem', padding: '6px 16px' }}
+                                                onClick={() => handleEditSave(idea.id)}
+                                                disabled={saving || !editForm.title.trim()}
+                                            >
+                                                {saving ? '保存中...' : '保存'}
+                                            </button>
+                                            <button
+                                                className="btn btn--secondary"
+                                                style={{ fontSize: '0.85rem', padding: '6px 16px' }}
+                                                onClick={() => setEditingId(null)}
+                                                disabled={saving}
+                                            >
+                                                キャンセル
+                                            </button>
+                                        </div>
                                     </div>
-                                    <span className={`idea-badge ${className}`}>{label}</span>
-                                </div>
-
-                                {/* タイトル */}
-                                <h3 className="idea-title">{idea.title}</h3>
-
-                                {/* 補足 */}
-                                {idea.description && (
-                                    <p className="idea-description">{idea.description}</p>
-                                )}
-
-                                {/* リアクション */}
-                                <div className="idea-reactions">
-                                    {REACTIONS.map(emoji => {
-                                        const users = idea.reactions?.[emoji] || []
-                                        const reacted = users.includes(user.uid)
-                                        return (
-                                            <button
-                                                key={emoji}
-                                                className={`idea-reaction-btn ${reacted ? 'idea-reaction-btn--active' : ''}`}
-                                                onClick={() => handleReaction(idea, emoji)}
-                                                title={reacted ? 'リアクションを取り消す' : 'リアクション'}
-                                            >
-                                                {emoji}
-                                                {users.length > 0 && (
-                                                    <span className="idea-reaction-count">{users.length}</span>
-                                                )}
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-
-                                {/* アクション */}
-                                <div className="idea-actions">
-                                    <button
-                                        className={`btn idea-copy-btn ${copiedId === idea.id ? 'idea-copy-btn--copied' : ''}`}
-                                        onClick={() => handleCopy(idea)}
-                                        title="クリップボードにコピー"
-                                    >
-                                        {copiedId === idea.id ? '✓ コピー済' : '⧉ コピー'}
-                                    </button>
-                                    <button
-                                        className={`btn idea-status-btn ${idea.status === 'used' ? 'idea-status-btn--revert' : 'idea-status-btn--use'}`}
-                                        onClick={() => handleToggleStatus(idea)}
-                                    >
-                                        {idea.status === 'unused' ? '✓ 使用済にする' : '↩ 未使用に戻す'}
-                                    </button>
-
-                                    {isAuthor && (
-                                        deleteConfirmId === idea.id ? (
-                                            <div className="idea-delete-confirm">
-                                                <span>削除しますか？</span>
-                                                <button
-                                                    className="btn btn--danger"
-                                                    style={{ padding: '4px 12px', fontSize: '0.8rem' }}
-                                                    onClick={() => handleDelete(idea.id)}
-                                                >
-                                                    削除
-                                                </button>
-                                                <button
-                                                    className="btn btn--secondary"
-                                                    style={{ padding: '4px 12px', fontSize: '0.8rem' }}
-                                                    onClick={() => setDeleteConfirmId(null)}
-                                                >
-                                                    キャンセル
-                                                </button>
+                                ) : (
+                                    /* 表示モード */
+                                    <>
+                                        {/* カードヘッダー */}
+                                        <div className="idea-card-header">
+                                            <div className="idea-card-meta">
+                                                <span className="idea-author">{idea.authorName}</span>
+                                                <span className="idea-date">{formatDate(idea.createdAt)}</span>
                                             </div>
-                                        ) : (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                                                <span className={`idea-badge ${className}`}>{label}</span>
+                                                {isAuthor && (
+                                                    <button
+                                                        className="btn idea-edit-btn"
+                                                        onClick={() => handleEditStart(idea)}
+                                                        title="編集"
+                                                    >
+                                                        ✎
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* タイトル */}
+                                        <h3 className="idea-title">{idea.title}</h3>
+
+                                        {/* 補足 */}
+                                        {idea.description && (
+                                            <p className="idea-description">{idea.description}</p>
+                                        )}
+
+                                        {/* リアクション */}
+                                        <div className="idea-reactions">
+                                            {REACTIONS.map(emoji => {
+                                                const users = idea.reactions?.[emoji] || []
+                                                const reacted = users.includes(user.uid)
+                                                return (
+                                                    <button
+                                                        key={emoji}
+                                                        className={`idea-reaction-btn ${reacted ? 'idea-reaction-btn--active' : ''}`}
+                                                        onClick={() => handleReaction(idea, emoji)}
+                                                        title={reacted ? 'リアクションを取り消す' : 'リアクション'}
+                                                    >
+                                                        {emoji}
+                                                        {users.length > 0 && (
+                                                            <span className="idea-reaction-count">{users.length}</span>
+                                                        )}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+
+                                        {/* アクション */}
+                                        <div className="idea-actions">
                                             <button
-                                                className="btn idea-delete-btn"
-                                                onClick={() => setDeleteConfirmId(idea.id)}
-                                                title="削除"
+                                                className={`btn idea-copy-btn ${copiedId === idea.id ? 'idea-copy-btn--copied' : ''}`}
+                                                onClick={() => handleCopy(idea)}
+                                                title="クリップボードにコピー"
                                             >
-                                                🗑 削除
+                                                {copiedId === idea.id ? '✓ コピー済' : '⧉ コピー'}
                                             </button>
-                                        )
-                                    )}
-                                </div>
+                                            <button
+                                                className={`btn idea-status-btn ${idea.status === 'used' ? 'idea-status-btn--revert' : 'idea-status-btn--use'}`}
+                                                onClick={() => handleToggleStatus(idea)}
+                                            >
+                                                {idea.status === 'unused' ? '✓ 使用済にする' : '↩ 未使用に戻す'}
+                                            </button>
+
+                                            {isAuthor && (
+                                                deleteConfirmId === idea.id ? (
+                                                    <div className="idea-delete-confirm">
+                                                        <span>削除しますか？</span>
+                                                        <button
+                                                            className="btn btn--danger"
+                                                            style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+                                                            onClick={() => handleDelete(idea.id)}
+                                                        >
+                                                            削除
+                                                        </button>
+                                                        <button
+                                                            className="btn btn--secondary"
+                                                            style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+                                                            onClick={() => setDeleteConfirmId(null)}
+                                                        >
+                                                            キャンセル
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        className="btn idea-delete-btn"
+                                                        onClick={() => setDeleteConfirmId(idea.id)}
+                                                        title="削除"
+                                                    >
+                                                        🗑 削除
+                                                    </button>
+                                                )
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         )
                     })}

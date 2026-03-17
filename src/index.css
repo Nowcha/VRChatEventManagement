@@ -1834,6 +1834,25 @@ tr:hover {
   background: rgba(229, 62, 62, 0.08);
 }
 
+.idea-edit-btn {
+  font-size: 0.9rem;
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+  line-height: 1;
+}
+
+.idea-edit-btn:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background: rgba(236, 201, 75, 0.08);
+}
+
+.idea-edit-form {
+  padding: var(--space-xs) 0;
+}
+
 .idea-copy-btn {
   font-size: 0.85rem;
   padding: 6px 14px;
