@@ -1649,6 +1649,22 @@ tr:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
+.ideas-sort-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.ideas-sort-btn:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
 .ideas-empty {
   text-align: center;
   padding: var(--space-3xl);

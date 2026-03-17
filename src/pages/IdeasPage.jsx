@@ -37,6 +37,7 @@ export default function IdeasPage() {
     const [editForm, setEditForm] = useState({ authorName: '', title: '', description: '' })
     const [saving, setSaving] = useState(false)
     const [allUsers, setAllUsers] = useState([])
+    const [sortOrder, setSortOrder] = useState('desc') // 'desc' = 新しい順, 'asc' = 古い順
 
     // ユーザー一覧取得
     useEffect(() => {
@@ -166,9 +167,13 @@ export default function IdeasPage() {
         }
     }
 
-    const filtered = statusFilter === 'all'
-        ? ideas
-        : ideas.filter(i => i.status === statusFilter)
+    const filtered = (statusFilter === 'all' ? ideas : ideas.filter(i => i.status === statusFilter))
+        .slice()
+        .sort((a, b) => {
+            const ta = a.createdAt?.toMillis?.() ?? 0
+            const tb = b.createdAt?.toMillis?.() ?? 0
+            return sortOrder === 'asc' ? ta - tb : tb - ta
+        })
 
     const formatDate = (ts) => {
         if (!ts?.toDate) return ''
@@ -222,7 +227,7 @@ export default function IdeasPage() {
                 </form>
             </div>
 
-            {/* フィルター */}
+            {/* フィルター & ソート */}
             <div className="ideas-filter-row">
                 {['all', 'unused', 'used'].map(f => (
                     <button
@@ -238,6 +243,14 @@ export default function IdeasPage() {
                         </span>
                     </button>
                 ))}
+                <button
+                    className="btn ideas-sort-btn"
+                    style={{ marginLeft: 'auto' }}
+                    onClick={() => setSortOrder(o => o === 'desc' ? 'asc' : 'desc')}
+                    title="並び順を切り替え"
+                >
+                    {sortOrder === 'desc' ? '↓ 新しい順' : '↑ 古い順'}
+                </button>
             </div>
 
             {/* アイデア一覧 */}
