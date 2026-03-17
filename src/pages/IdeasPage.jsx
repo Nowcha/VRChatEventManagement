@@ -97,7 +97,7 @@ export default function IdeasPage() {
 
     // コピー
     const handleCopy = (idea) => {
-        const text = `【プレオープン】Bar 未完【${idea.title}】`
+        const text = `【プレオープン】Bar 未完 第○回【${idea.title}】`
         navigator.clipboard.writeText(text).then(() => {
             setCopiedId(idea.id)
             setTimeout(() => setCopiedId(null), 2000)
