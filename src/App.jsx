@@ -8,6 +8,7 @@ import CustomersPage from './pages/CustomersPage'
 import FeedbacksPage from './pages/FeedbacksPage'
 import GalleryPage from './pages/GalleryPage'
 import SettingsPage from './pages/SettingsPage'
+import IdeasPage from './pages/IdeasPage'
 
 function ProtectedRoute({ children }) {
     const { user, loading } = useAuth()
@@ -70,6 +71,7 @@ function AppRoutes() {
                 <Route path="customers" element={<CustomersPage />} />
                 <Route path="feedbacks" element={<FeedbacksPage />} />
                 <Route path="gallery" element={<GalleryPage />} />
+                <Route path="ideas" element={<IdeasPage />} />
                 <Route path="settings" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
