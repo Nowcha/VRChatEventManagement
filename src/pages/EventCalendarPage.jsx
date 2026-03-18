@@ -216,7 +216,7 @@ export default function EventCalendarPage() {
             },
             baseEvent: {
                 title: data.title, joinMethod: data.joinMethod,
-                reqInLimit: data.reqInLimit, note: data.note,
+                reqInLimit: data.reqInLimit, note: data.note, xUrl: data.xUrl,
                 startTime: { hours: data.startAt.getHours(), minutes: data.startAt.getMinutes() },
                 endTime: data.endAt ? { hours: data.endAt.getHours(), minutes: data.endAt.getMinutes() } : null,
             },
@@ -244,6 +244,7 @@ export default function EventCalendarPage() {
                     joinMethod: data.joinMethod,
                     reqInLimit: data.reqInLimit,
                     note: data.note,
+                    xUrl: data.xUrl,
                     createdBy: user.uid,
                     createdByName: userData?.displayName || user.displayName || 'Unknown',
                     createdAt: serverTimestamp(),
@@ -313,7 +314,7 @@ export default function EventCalendarPage() {
                     batch.update(doc(db, 'externalEvents', e.id), {
                         title: data.title, startAt: Timestamp.fromDate(ns),
                         endAt: ne, joinMethod: data.joinMethod,
-                        reqInLimit: data.reqInLimit, note: data.note,
+                        reqInLimit: data.reqInLimit, note: data.note, xUrl: data.xUrl,
                     })
                 })
                 await batch.commit()

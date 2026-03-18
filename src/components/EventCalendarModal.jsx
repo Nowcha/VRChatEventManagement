@@ -32,6 +32,7 @@ const emptyForm = () => ({
     joinMethod: 'join',
     reqInLimit: '',
     note: '',
+    xUrl: '',
     isRecurring: false,
     recurringRule: {
         frequency: 'weekly',
@@ -52,6 +53,7 @@ export default function EventCalendarModal({ initialData, onSave, onCancel }) {
             joinMethod: initialData.joinMethod || 'join',
             reqInLimit: initialData.reqInLimit ?? '',
             note: initialData.note || '',
+            xUrl: initialData.xUrl || '',
             isRecurring: initialData.isRecurring || false,
             recurringRule: initialData.recurringRule ? {
                 frequency: initialData.recurringRule.frequency || 'weekly',
@@ -112,6 +114,7 @@ export default function EventCalendarModal({ initialData, onSave, onCancel }) {
                 joinMethod: form.joinMethod,
                 reqInLimit: form.joinMethod === 'reqin' && form.reqInLimit !== '' ? Number(form.reqInLimit) : null,
                 note: form.note.trim(),
+                xUrl: form.xUrl.trim(),
                 isRecurring: form.isRecurring,
             }
             if (form.isRecurring) {
@@ -224,6 +227,18 @@ export default function EventCalendarModal({ initialData, onSave, onCancel }) {
                                 onChange={e => setField('note', e.target.value)}
                                 placeholder="開催場所・補足情報など"
                                 style={{ resize: 'vertical' }}
+                            />
+                        </div>
+
+                        {/* 公式X リンク */}
+                        <div className="form-group">
+                            <label className="form-label">公式X リンク <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>（任意）</span></label>
+                            <input
+                                className="form-input"
+                                type="url"
+                                value={form.xUrl}
+                                onChange={e => setField('xUrl', e.target.value)}
+                                placeholder="https://x.com/..."
                             />
                         </div>
 

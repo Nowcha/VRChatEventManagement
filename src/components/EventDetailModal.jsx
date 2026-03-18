@@ -96,6 +96,21 @@ export default function EventDetailModal({ event, managedUntil, onEdit, onDelete
                         </div>
                     )}
 
+                    {/* 公式X リンク */}
+                    {event.xUrl && (
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '16px', minWidth: '20px' }}>✕</span>
+                            <a
+                                href={event.xUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ fontSize: '14px', color: 'var(--accent-pink-light)', wordBreak: 'break-all' }}
+                            >
+                                {event.xUrl}
+                            </a>
+                        </div>
+                    )}
+
                     {/* 登録者 */}
                     {event.createdByName && (
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
