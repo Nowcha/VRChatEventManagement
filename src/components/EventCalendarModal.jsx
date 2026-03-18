@@ -56,33 +56,34 @@ function DateTimePicker({ value, onChange }) {
     }
 
     return (
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <input
                 type="date"
                 className="form-input"
-                style={{ flex: '1', minWidth: 0 }}
                 value={date}
                 onChange={e => { setDate(e.target.value); emit(e.target.value, hour, minute) }}
             />
-            <select
-                className="form-input"
-                style={{ width: '62px', flexShrink: 0 }}
-                value={hour}
-                onChange={e => { setHour(e.target.value); emit(date, e.target.value, minute) }}
-            >
-                <option value="">--</option>
-                {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-            </select>
-            <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>:</span>
-            <select
-                className="form-input"
-                style={{ width: '62px', flexShrink: 0 }}
-                value={minute}
-                onChange={e => { setMinute(e.target.value); emit(date, hour, e.target.value) }}
-            >
-                <option value="">--</option>
-                {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <select
+                    className="form-input"
+                    style={{ flex: 1 }}
+                    value={hour}
+                    onChange={e => { setHour(e.target.value); emit(date, e.target.value, minute) }}
+                >
+                    <option value="">時</option>
+                    {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+                </select>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>:</span>
+                <select
+                    className="form-input"
+                    style={{ flex: 1 }}
+                    value={minute}
+                    onChange={e => { setMinute(e.target.value); emit(date, hour, e.target.value) }}
+                >
+                    <option value="">分</option>
+                    {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+            </div>
         </div>
     )
 }
