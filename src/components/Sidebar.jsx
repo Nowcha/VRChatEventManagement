@@ -22,6 +22,7 @@ export default function Sidebar({ isOpen, onClose }) {
         { path: '/feedbacks', icon: '✎', label: '感想・接客記録' },
         { path: '/gallery', icon: '◫', label: 'ギャラリー' },
         { path: '/ideas', icon: '✦', label: 'タイトルアイデア' },
+        { path: '/events', icon: '▦', label: 'イベントカレンダー' },
     ]
 
     const settingsItems = [
