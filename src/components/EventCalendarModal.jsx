@@ -25,6 +25,68 @@ function toDatetimeLocal(timestamp) {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+const HOURS   = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+const MINUTES = ['00','05','10','15','20','25','30','35','40','45','50','55']
+
+// 日付・時・分を個別 select にした日時ピッカー（末端でループしない）
+function DateTimePicker({ value, onChange }) {
+    const [date, setDate] = useState('')
+    const [hour, setHour] = useState('')
+    const [minute, setMinute] = useState('')
+
+    useEffect(() => {
+        if (value && value.includes('T')) {
+            const [d, t] = value.split('T')
+            const [h, m] = t.split(':')
+            setDate(d)
+            setHour(h)
+            // 5分単位に丸める（編集時に既存値が合わない場合の対処）
+            const nearestM = MINUTES.reduce((prev, cur) =>
+                Math.abs(Number(cur) - Number(m)) < Math.abs(Number(prev) - Number(m)) ? cur : prev
+            )
+            setMinute(nearestM)
+        } else {
+            setDate(''); setHour(''); setMinute('')
+        }
+    }, [value])
+
+    function emit(d, h, m) {
+        if (d && h !== '' && m !== '') onChange(`${d}T${h}:${m}`)
+        else onChange('')
+    }
+
+    return (
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+            <input
+                type="date"
+                className="form-input"
+                style={{ flex: '1', minWidth: 0 }}
+                value={date}
+                onChange={e => { setDate(e.target.value); emit(e.target.value, hour, minute) }}
+            />
+            <select
+                className="form-input"
+                style={{ width: '62px', flexShrink: 0 }}
+                value={hour}
+                onChange={e => { setHour(e.target.value); emit(date, e.target.value, minute) }}
+            >
+                <option value="">--</option>
+                {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+            </select>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>:</span>
+            <select
+                className="form-input"
+                style={{ width: '62px', flexShrink: 0 }}
+                value={minute}
+                onChange={e => { setMinute(e.target.value); emit(date, hour, e.target.value) }}
+            >
+                <option value="">--</option>
+                {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+        </div>
+    )
+}
+
 const emptyForm = () => ({
     title: '',
     startAt: '',
@@ -162,22 +224,12 @@ export default function EventCalendarModal({ initialData, onSave, onCancel }) {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                             <div className="form-group">
                                 <label className="form-label">開始日時 <span style={{ color: 'var(--accent-pink)' }}>*</span></label>
-                                <input
-                                    className="form-input"
-                                    type="datetime-local"
-                                    value={form.startAt}
-                                    onChange={e => setField('startAt', e.target.value)}
-                                />
+                                <DateTimePicker value={form.startAt} onChange={v => setField('startAt', v)} />
                                 {errors.startAt && <span className="form-error">{errors.startAt}</span>}
                             </div>
                             <div className="form-group">
                                 <label className="form-label">終了日時 <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>（任意）</span></label>
-                                <input
-                                    className="form-input"
-                                    type="datetime-local"
-                                    value={form.endAt}
-                                    onChange={e => setField('endAt', e.target.value)}
-                                />
+                                <DateTimePicker value={form.endAt} onChange={v => setField('endAt', v)} />
                                 {errors.endAt && <span className="form-error">{errors.endAt}</span>}
                             </div>
                         </div>
