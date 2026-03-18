@@ -621,6 +621,7 @@ function TimeGrid({ days, events, onEventClick }) {
                 {/* 各日カラム */}
                 {days.map((day, di) => {
                     const dayEvs = eventsForDay(day)
+                    const totalHeight = hours.length * HOUR_HEIGHT
                     return (
                         <div
                             key={di}
@@ -637,48 +638,55 @@ function TimeGrid({ days, events, onEventClick }) {
                                     borderBottom: '1px solid var(--border-subtle)',
                                 }} />
                             ))}
-                            {/* イベントブロック（重複時は並列配置） */}
-                            {layoutDayEvents(dayEvs).map(({ ev, col, totalCols }) => {
-                                const { top, height } = calcEventPos(ev.startAt, ev.endAt)
-                                const color = JOIN_COLORS[ev.joinMethod] || JOIN_COLORS.join
-                                const inRange = top >= 0 && top < (END_HOUR - BASE_HOUR) * HOUR_HEIGHT
-                                if (!inRange) return null
-                                const leftPct  = (col / totalCols) * 100
-                                const widthPct = (1 / totalCols) * 100
-                                // 重複イベント同士の間にのみ 1px の区切りを入れ、端は列幅ぴったりに揃える
-                                const gapLeft  = col > 0 ? 1 : 0
-                                const gapRight = col < totalCols - 1 ? 1 : 0
-                                return (
-                                    <div
-                                        key={ev.id}
-                                        onClick={() => onEventClick(ev)}
-                                        style={{
-                                            position: 'absolute',
-                                            top: `${top}px`,
-                                            left: `calc(${leftPct}% + ${gapLeft}px)`,
-                                            width: `calc(${widthPct}% - ${gapLeft + gapRight}px)`,
-                                            height: `${height}px`, minHeight: '22px',
-                                            background: color.bg,
-                                            border: `1px solid ${color.border}`,
-                                            borderLeft: `3px solid ${color.border}`,
-                                            borderRadius: '4px',
-                                            padding: '2px 4px', cursor: 'pointer',
-                                            overflow: 'hidden', zIndex: 1,
-                                            transition: 'opacity 0.15s',
-                                            boxSizing: 'border-box',
-                                        }}
-                                        onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
-                                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                                    >
-                                        <div style={{ fontSize: '0.65rem', fontWeight: '700', color: color.text, lineHeight: 1.2 }}>
-                                            {fmtTime(ev.startAt)}
+                            {/* イベントコンテナ：明示的に列幅いっぱいに広げた containing block */}
+                            <div style={{
+                                position: 'absolute',
+                                top: 0, left: 0, right: 0,
+                                height: `${totalHeight}px`,
+                                pointerEvents: 'none',
+                            }}>
+                                {layoutDayEvents(dayEvs).map(({ ev, col, totalCols }) => {
+                                    const { top, height } = calcEventPos(ev.startAt, ev.endAt)
+                                    const color = JOIN_COLORS[ev.joinMethod] || JOIN_COLORS.join
+                                    const inRange = top >= 0 && top < totalHeight
+                                    if (!inRange) return null
+                                    const leftPct  = (col / totalCols) * 100
+                                    const widthPct = (1 / totalCols) * 100
+                                    const gapLeft  = col > 0 ? 1 : 0
+                                    const gapRight = col < totalCols - 1 ? 1 : 0
+                                    return (
+                                        <div
+                                            key={ev.id}
+                                            onClick={() => onEventClick(ev)}
+                                            style={{
+                                                position: 'absolute',
+                                                top: `${top}px`,
+                                                left: `calc(${leftPct}% + ${gapLeft}px)`,
+                                                width: `calc(${widthPct}% - ${gapLeft + gapRight}px)`,
+                                                height: `${height}px`, minHeight: '22px',
+                                                background: color.bg,
+                                                border: `1px solid ${color.border}`,
+                                                borderLeft: `3px solid ${color.border}`,
+                                                borderRadius: '4px',
+                                                padding: '2px 4px', cursor: 'pointer',
+                                                overflow: 'hidden', zIndex: 1,
+                                                transition: 'opacity 0.15s',
+                                                boxSizing: 'border-box',
+                                                pointerEvents: 'auto',
+                                            }}
+                                            onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+                                            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                                        >
+                                            <div style={{ fontSize: '0.65rem', fontWeight: '700', color: color.text, lineHeight: 1.2 }}>
+                                                {fmtTime(ev.startAt)}
+                                            </div>
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-primary)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {ev.title}
+                                            </div>
                                         </div>
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-primary)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {ev.title}
-                                        </div>
-                                    </div>
-                                )
-                            })}
+                                    )
+                                })}
+                            </div>
                         </div>
                     )
                 })}
