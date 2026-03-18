@@ -172,7 +172,7 @@ export default function EventCalendarPage() {
             const s = days[0], e = days[6]
             if (s.getMonth() === e.getMonth())
                 return `${s.getFullYear()}年 ${s.getMonth() + 1}月 ${s.getDate()}日 〜 ${e.getDate()}日`
-            return `${s.getFullYear()}年 ${s.getMonth() + 1}/${s.getDate()} 〜 ${e.getMonth() + 1}/${e.getDate()}`
+            return `${s.getFullYear()}年 ${s.getMonth() + 1}月${s.getDate()}日 〜 ${e.getMonth() + 1}月${e.getDate()}日`
         }
         return `${y}年 ${m}月 ${currentDate.getDate()}日（${DAY_NAMES[currentDate.getDay()]}）`
     }
@@ -551,8 +551,8 @@ function layoutDayEvents(dayEvs) {
 // ===== 時間グリッドコンポーネント（週/日共通） =====
 function TimeGrid({ days, events, onEventClick }) {
     const hours = Array.from({ length: END_HOUR - BASE_HOUR }, (_, i) => BASE_HOUR + i)
-    const isWeek = days.length === 7
     const today = new Date()
+    const totalHeight = hours.length * HOUR_HEIGHT
 
     const eventsForDay = (date) => events.filter(ev => {
         const d = ev.startAt?.toDate ? ev.startAt.toDate() : new Date(ev.startAt)
@@ -566,22 +566,21 @@ function TimeGrid({ days, events, onEventClick }) {
         d.getMonth()    === today.getMonth() &&
         d.getDate()     === today.getDate()
 
-    const cols = `56px repeat(${days.length}, 1fr)`
-
     return (
         <div style={{ overflowX: 'auto', maxHeight: '680px', overflowY: 'auto' }}>
             {/* 曜日ヘッダー（sticky） */}
             <div style={{
-                display: 'grid', gridTemplateColumns: cols,
+                display: 'flex',
                 borderBottom: '1px solid var(--border-subtle)',
                 position: 'sticky', top: 0, zIndex: 2,
                 background: 'var(--bg-card)',
             }}>
-                <div style={{ padding: '8px' }} />
+                <div style={{ width: '56px', flexShrink: 0, padding: '8px' }} />
                 {days.map((d, i) => (
                     <div
                         key={i}
                         style={{
+                            flex: 1, minWidth: 0,
                             padding: '8px 4px', textAlign: 'center', fontSize: '0.75rem',
                             fontWeight: 'var(--font-weight-medium)', color: 'var(--text-tertiary)',
                             borderLeft: '1px solid var(--border-subtle)',
@@ -602,10 +601,10 @@ function TimeGrid({ days, events, onEventClick }) {
                 ))}
             </div>
 
-            {/* 時間グリッド（ヘッダーと同一コンテナ内） */}
-            <div style={{ display: 'grid', gridTemplateColumns: cols, position: 'relative' }}>
+            {/* 時間グリッド */}
+            <div style={{ display: 'flex' }}>
                 {/* 時刻軸 */}
-                <div style={{ position: 'relative' }}>
+                <div style={{ width: '56px', flexShrink: 0 }}>
                     {hours.map(h => (
                         <div key={h} style={{
                             height: `${HOUR_HEIGHT}px`, borderBottom: '1px solid var(--border-subtle)',
@@ -621,12 +620,13 @@ function TimeGrid({ days, events, onEventClick }) {
                 {/* 各日カラム */}
                 {days.map((day, di) => {
                     const dayEvs = eventsForDay(day)
-                    const totalHeight = hours.length * HOUR_HEIGHT
                     return (
                         <div
                             key={di}
                             style={{
+                                flex: 1, minWidth: 0,
                                 position: 'relative',
+                                height: `${totalHeight}px`,
                                 borderLeft: '1px solid var(--border-subtle)',
                                 background: isToday(day) ? 'rgba(232,67,147,0.02)' : 'transparent',
                             }}
@@ -638,55 +638,46 @@ function TimeGrid({ days, events, onEventClick }) {
                                     borderBottom: '1px solid var(--border-subtle)',
                                 }} />
                             ))}
-                            {/* イベントコンテナ：明示的に列幅いっぱいに広げた containing block */}
-                            <div style={{
-                                position: 'absolute',
-                                top: 0, left: 0, right: 0,
-                                height: `${totalHeight}px`,
-                                pointerEvents: 'none',
-                            }}>
-                                {layoutDayEvents(dayEvs).map(({ ev, col, totalCols }) => {
-                                    const { top, height } = calcEventPos(ev.startAt, ev.endAt)
-                                    const color = JOIN_COLORS[ev.joinMethod] || JOIN_COLORS.join
-                                    const inRange = top >= 0 && top < totalHeight
-                                    if (!inRange) return null
-                                    const leftPct  = (col / totalCols) * 100
-                                    const widthPct = (1 / totalCols) * 100
-                                    const gapLeft  = col > 0 ? 1 : 0
-                                    const gapRight = col < totalCols - 1 ? 1 : 0
-                                    return (
-                                        <div
-                                            key={ev.id}
-                                            onClick={() => onEventClick(ev)}
-                                            style={{
-                                                position: 'absolute',
-                                                top: `${top}px`,
-                                                left: `calc(${leftPct}% + ${gapLeft}px)`,
-                                                width: `calc(${widthPct}% - ${gapLeft + gapRight}px)`,
-                                                height: `${height}px`, minHeight: '22px',
-                                                background: color.bg,
-                                                border: `1px solid ${color.border}`,
-                                                borderLeft: `3px solid ${color.border}`,
-                                                borderRadius: '4px',
-                                                padding: '2px 4px', cursor: 'pointer',
-                                                overflow: 'hidden', zIndex: 1,
-                                                transition: 'opacity 0.15s',
-                                                boxSizing: 'border-box',
-                                                pointerEvents: 'auto',
-                                            }}
-                                            onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
-                                            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                                        >
-                                            <div style={{ fontSize: '0.65rem', fontWeight: '700', color: color.text, lineHeight: 1.2 }}>
-                                                {fmtTime(ev.startAt)}
-                                            </div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-primary)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {ev.title}
-                                            </div>
+                            {/* イベントブロック（直接 position:relative の div に対して absolute 配置） */}
+                            {layoutDayEvents(dayEvs).map(({ ev, col, totalCols }) => {
+                                const { top, height } = calcEventPos(ev.startAt, ev.endAt)
+                                const color = JOIN_COLORS[ev.joinMethod] || JOIN_COLORS.join
+                                if (top < 0 || top >= totalHeight) return null
+                                const leftPct  = (col / totalCols) * 100
+                                const widthPct = (1 / totalCols) * 100
+                                const gapLeft  = col > 0 ? 1 : 0
+                                const gapRight = col < totalCols - 1 ? 1 : 0
+                                return (
+                                    <div
+                                        key={ev.id}
+                                        onClick={() => onEventClick(ev)}
+                                        style={{
+                                            position: 'absolute',
+                                            top: `${top}px`,
+                                            left: `calc(${leftPct}% + ${gapLeft}px)`,
+                                            width: `calc(${widthPct}% - ${gapLeft + gapRight}px)`,
+                                            height: `${height}px`, minHeight: '22px',
+                                            background: color.bg,
+                                            border: `1px solid ${color.border}`,
+                                            borderLeft: `3px solid ${color.border}`,
+                                            borderRadius: '4px',
+                                            padding: '2px 4px', cursor: 'pointer',
+                                            overflow: 'hidden', zIndex: 1,
+                                            transition: 'opacity 0.15s',
+                                            boxSizing: 'border-box',
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+                                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                                    >
+                                        <div style={{ fontSize: '0.65rem', fontWeight: '700', color: color.text, lineHeight: 1.2 }}>
+                                            {fmtTime(ev.startAt)}
                                         </div>
-                                    )
-                                })}
-                            </div>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-primary)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {ev.title}
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
                     )
                 })}
