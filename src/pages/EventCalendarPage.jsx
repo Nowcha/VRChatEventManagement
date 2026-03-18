@@ -26,56 +26,56 @@ function expandRecurringDates(baseDate, rule, managedUntil) {
     const dates = []
     const until = new Date(managedUntil)
     const { frequency, weekdays = [], endType, endDate, count } = rule
-    let current = new Date(baseDate)
-    let occurrences = 0
     const maxCount = endType === 'after' ? Number(count) : Infinity
     const maxDate = endType === 'on' && endDate ? new Date(endDate) : until
+    let occurrences = 0
 
-    while (current <= until && current <= maxDate && occurrences < maxCount) {
-        if (['weekly', 'biweekly', 'specific_weekday'].includes(frequency)) {
+    if (frequency === 'daily') {
+        let current = new Date(baseDate)
+        while (current <= until && current <= maxDate && occurrences < maxCount) {
+            dates.push(new Date(current))
+            occurrences++
+            current.setDate(current.getDate() + 1)
+        }
+    } else if (frequency === 'weekly' || frequency === 'specific_weekday') {
+        let current = new Date(baseDate)
+        while (current <= until && current <= maxDate && occurrences < maxCount) {
             if (weekdays.includes(current.getDay())) {
                 dates.push(new Date(current))
                 occurrences++
             }
-        } else {
+            current.setDate(current.getDate() + 1)
+        }
+    } else if (frequency === 'biweekly') {
+        // baseDateの週を「第0週（開催週）」とし、偶数週のみ開催
+        const baseSunday = new Date(baseDate)
+        baseSunday.setDate(baseDate.getDate() - baseDate.getDay()) // 日曜に戻す
+        baseSunday.setHours(0, 0, 0, 0)
+
+        let current = new Date(baseDate)
+        while (current <= until && current <= maxDate && occurrences < maxCount) {
+            // 現在日の週の日曜日を求める
+            const curSunday = new Date(current)
+            curSunday.setDate(current.getDate() - current.getDay())
+            curSunday.setHours(0, 0, 0, 0)
+            // baseSundayからの週数差
+            const weekDiff = Math.round((curSunday - baseSunday) / (7 * 24 * 60 * 60 * 1000))
+            // 偶数週（0, 2, 4...）かつ選択曜日に一致する日を追加
+            if (weekDiff % 2 === 0 && weekdays.includes(current.getDay())) {
+                dates.push(new Date(current))
+                occurrences++
+            }
+            current.setDate(current.getDate() + 1)
+        }
+    } else if (frequency === 'monthly') {
+        let current = new Date(baseDate)
+        while (current <= until && current <= maxDate && occurrences < maxCount) {
             dates.push(new Date(current))
             occurrences++
-        }
-
-        switch (frequency) {
-            case 'daily':
-                current.setDate(current.getDate() + 1)
-                break
-            case 'weekly':
-            case 'specific_weekday':
-                current.setDate(current.getDate() + 1)
-                break
-            case 'biweekly': {
-                current.setDate(current.getDate() + 1)
-                // 同週のweekdaysが終わったら14日先の先頭曜日へジャンプ
-                const recentInGroup = weekdays.some(d => d === current.getDay())
-                if (!recentInGroup) {
-                    const minWd = Math.min(...weekdays)
-                    const jump = new Date(current)
-                    // 次の隔週の minWd まで進む
-                    let steps = 0
-                    while (jump.getDay() !== minWd || steps < 7) {
-                        jump.setDate(jump.getDate() + 1)
-                        steps++
-                    }
-                    // さらに7日追加して隔週に
-                    jump.setDate(jump.getDate() + 7)
-                    current = jump
-                }
-                break
-            }
-            case 'monthly':
-                current.setMonth(current.getMonth() + 1)
-                break
-            default:
-                current.setDate(current.getDate() + 1)
+            current.setMonth(current.getMonth() + 1)
         }
     }
+
     return dates
 }
 
@@ -390,20 +390,36 @@ export default function EventCalendarPage() {
                         <button className="btn btn-ghost btn-sm" onClick={() => navigate(1)}>▶</button>
                         <button className="btn btn-ghost btn-sm" onClick={goToday} style={{ marginLeft: '4px', fontSize: '12px' }}>今日</button>
                     </div>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                        {[
-                            { key: 'month', label: '月' },
-                            { key: 'week',  label: '週' },
-                            { key: 'day',   label: '日' },
-                        ].map(v => (
-                            <button
-                                key={v.key}
-                                className={`btn btn-sm ${view === v.key ? 'btn-primary' : 'btn-ghost'}`}
-                                onClick={() => setView(v.key)}
-                            >
-                                {v.label}
-                            </button>
-                        ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                        {/* 凡例 */}
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            {[
+                                { key: 'join',  label: 'Join' },
+                                { key: 'reqin', label: 'ReqIn' },
+                                { key: 'group', label: 'Group' },
+                            ].map(({ key, label }) => (
+                                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                                    <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: JOIN_COLORS[key].border, flexShrink: 0 }} />
+                                    {label}
+                                </div>
+                            ))}
+                        </div>
+                        {/* ビュー切替 */}
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                            {[
+                                { key: 'month', label: '月' },
+                                { key: 'week',  label: '週' },
+                                { key: 'day',   label: '日' },
+                            ].map(v => (
+                                <button
+                                    key={v.key}
+                                    className={`btn btn-sm ${view === v.key ? 'btn-primary' : 'btn-ghost'}`}
+                                    onClick={() => setView(v.key)}
+                                >
+                                    {v.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
