@@ -515,36 +515,41 @@ export default function EventCalendarPage() {
     )
 }
 
-// 同一日のイベントを並列レイアウトに計算する
+// 同一日のイベントを並列レイアウトに計算する（描画座標ベースでオーバーラップ判定）
 function layoutDayEvents(dayEvs) {
     if (dayEvs.length === 0) return []
 
-    const getMs = ev => ev.startAt?.toDate ? ev.startAt.toDate().getTime() : new Date(ev.startAt).getTime()
-    const getEndMs = ev => {
-        if (ev.endAt) return ev.endAt?.toDate ? ev.endAt.toDate().getTime() : new Date(ev.endAt).getTime()
-        return getMs(ev) + 30 * 60 * 1000
-    }
+    const totalHeight = (END_HOUR - BASE_HOUR) * HOUR_HEIGHT
 
-    const sorted = [...dayEvs].sort((a, b) => getMs(a) - getMs(b))
+    // 描画位置を計算し、表示範囲外を除外
+    const items = dayEvs
+        .map(ev => {
+            const { top, height } = calcEventPos(ev.startAt, ev.endAt)
+            return { ev, top, height, bottom: top + height }
+        })
+        .filter(item => item.top >= 0 && item.top < totalHeight)
 
-    // 各イベントにグリッド列を貪欲に割り当て
-    const colEnds = [] // 各列の最終終了時刻
-    const assignments = sorted.map(ev => {
-        const s = getMs(ev)
-        const e = getEndMs(ev)
-        let col = colEnds.findIndex(endTime => endTime <= s)
-        if (col === -1) { col = colEnds.length; colEnds.push(e) }
-        else colEnds[col] = e
-        return { ev, col }
+    if (items.length === 0) return []
+
+    // 描画上のtop位置でソート
+    const sorted = [...items].sort((a, b) => a.top - b.top || a.bottom - b.bottom)
+
+    // 描画位置ベースで列を貪欲割り当て
+    const colEnds = []
+    const assignments = sorted.map(item => {
+        let col = colEnds.findIndex(endPos => endPos <= item.top)
+        if (col === -1) { col = colEnds.length; colEnds.push(item.bottom) }
+        else colEnds[col] = item.bottom
+        return { ...item, col }
     })
 
-    // 各イベントの totalCols = 自分と重なる全イベントの最大 (col+1)
+    // totalCols = 描画位置が重なる全イベントの最大 (col+1)
     return assignments.map(item => {
-        const s = getMs(item.ev)
-        const e = getEndMs(item.ev)
-        const overlapping = assignments.filter(o => getMs(o.ev) < e && getEndMs(o.ev) > s)
+        const overlapping = assignments.filter(o =>
+            o.top < item.bottom && o.bottom > item.top
+        )
         const totalCols = Math.max(...overlapping.map(o => o.col + 1))
-        return { ev: item.ev, col: item.col, totalCols }
+        return { ev: item.ev, col: item.col, totalCols, top: item.top, height: item.height }
     })
 }
 
@@ -639,10 +644,8 @@ function TimeGrid({ days, events, onEventClick }) {
                                 }} />
                             ))}
                             {/* イベントブロック（直接 position:relative の div に対して absolute 配置） */}
-                            {layoutDayEvents(dayEvs).map(({ ev, col, totalCols }) => {
-                                const { top, height } = calcEventPos(ev.startAt, ev.endAt)
+                            {layoutDayEvents(dayEvs).map(({ ev, col, totalCols, top, height }) => {
                                 const color = JOIN_COLORS[ev.joinMethod] || JOIN_COLORS.join
-                                if (top < 0 || top >= totalHeight) return null
                                 const leftPct  = (col / totalCols) * 100
                                 const widthPct = (1 / totalCols) * 100
                                 const gapLeft  = col > 0 ? 1 : 0
@@ -656,7 +659,7 @@ function TimeGrid({ days, events, onEventClick }) {
                                             top: `${top}px`,
                                             left: `calc(${leftPct}% + ${gapLeft}px)`,
                                             width: `calc(${widthPct}% - ${gapLeft + gapRight}px)`,
-                                            height: `${height}px`, minHeight: '22px',
+                                            height: `${Math.max(height, 22)}px`,
                                             background: color.bg,
                                             border: `1px solid ${color.border}`,
                                             borderLeft: `3px solid ${color.border}`,
