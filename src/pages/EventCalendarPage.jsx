@@ -645,6 +645,9 @@ function TimeGrid({ days, events, onEventClick }) {
                                 if (!inRange) return null
                                 const leftPct  = (col / totalCols) * 100
                                 const widthPct = (1 / totalCols) * 100
+                                // 重複イベント同士の間にのみ 1px の区切りを入れ、端は列幅ぴったりに揃える
+                                const gapLeft  = col > 0 ? 1 : 0
+                                const gapRight = col < totalCols - 1 ? 1 : 0
                                 return (
                                     <div
                                         key={ev.id}
@@ -652,8 +655,8 @@ function TimeGrid({ days, events, onEventClick }) {
                                         style={{
                                             position: 'absolute',
                                             top: `${top}px`,
-                                            left: `calc(${leftPct}% + 2px)`,
-                                            width: `calc(${widthPct}% - 4px)`,
+                                            left: `calc(${leftPct}% + ${gapLeft}px)`,
+                                            width: `calc(${widthPct}% - ${gapLeft + gapRight}px)`,
                                             height: `${height}px`, minHeight: '22px',
                                             background: color.bg,
                                             border: `1px solid ${color.border}`,
