@@ -32,7 +32,7 @@ const MINUTES = ['00','05','10','15','20','25','30','35','40','45','50','55']
 function DateTimePicker({ value, onChange }) {
     const [date, setDate] = useState('')
     const [hour, setHour] = useState('')
-    const [minute, setMinute] = useState('')
+    const [minute, setMinute] = useState('00')
 
     useEffect(() => {
         if (value && value.includes('T')) {
@@ -46,12 +46,12 @@ function DateTimePicker({ value, onChange }) {
             )
             setMinute(nearestM)
         } else {
-            setDate(''); setHour(''); setMinute('')
+            setDate(''); setHour(''); setMinute('00')
         }
     }, [value])
 
     function emit(d, h, m) {
-        if (d && h !== '' && m !== '') onChange(`${d}T${h}:${m}`)
+        if (d && h !== '') onChange(`${d}T${h}:${m || '00'}`)
         else onChange('')
     }
 
