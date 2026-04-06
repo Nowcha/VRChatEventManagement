@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
     collection,
     query,
@@ -38,6 +38,7 @@ export default function IdeasPage() {
     const [saving, setSaving] = useState(false)
     const [allUsers, setAllUsers] = useState([])
     const [sortOrder, setSortOrder] = useState('desc') // 'desc' = 新しい順, 'asc' = 古い順
+    const [reactionFilter, setReactionFilter] = useState(new Set())
 
     // ユーザー一覧取得
     useEffect(() => {
@@ -167,13 +168,31 @@ export default function IdeasPage() {
         }
     }
 
-    const filtered = (statusFilter === 'all' ? ideas : ideas.filter(i => i.status === statusFilter))
-        .slice()
-        .sort((a, b) => {
-            const ta = a.createdAt?.toMillis?.() ?? 0
-            const tb = b.createdAt?.toMillis?.() ?? 0
-            return sortOrder === 'asc' ? ta - tb : tb - ta
+    const toggleReactionFilter = (emoji) => {
+        setReactionFilter(prev => {
+            const next = new Set(prev)
+            if (next.has(emoji)) next.delete(emoji)
+            else next.add(emoji)
+            return next
         })
+    }
+
+    const filtered = useMemo(() => {
+        return ideas
+            .filter(i => {
+                if (statusFilter !== 'all' && i.status !== statusFilter) return false
+                if (reactionFilter.size === 0) return true
+                for (const emoji of reactionFilter) {
+                    if ((i.reactions?.[emoji] || []).length > 0) return true
+                }
+                return false
+            })
+            .sort((a, b) => {
+                const ta = a.createdAt?.toMillis?.() ?? 0
+                const tb = b.createdAt?.toMillis?.() ?? 0
+                return sortOrder === 'asc' ? ta - tb : tb - ta
+            })
+    }, [ideas, statusFilter, reactionFilter, sortOrder])
 
     const formatDate = (ts) => {
         if (!ts?.toDate) return ''
@@ -243,6 +262,18 @@ export default function IdeasPage() {
                         </span>
                     </button>
                 ))}
+                <div className="ideas-reaction-filter">
+                    {REACTIONS.map(emoji => (
+                        <button
+                            key={emoji}
+                            className={`btn ideas-reaction-filter-btn ${reactionFilter.has(emoji) ? 'ideas-reaction-filter-btn--active' : ''}`}
+                            onClick={() => toggleReactionFilter(emoji)}
+                            title={`${emoji} が押されたアイデアで絞り込む`}
+                        >
+                            {emoji}
+                        </button>
+                    ))}
+                </div>
                 <button
                     className="btn ideas-sort-btn"
                     style={{ marginLeft: 'auto' }}
