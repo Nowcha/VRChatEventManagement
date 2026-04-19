@@ -539,7 +539,7 @@ export default function FeedbacksPage() {
                                     )}
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">対象のお客さま（最大3名まで）</label>
+                                    <label className="form-label">対象のお客さま</label>
                                     <input
                                         type="text"
                                         className="form-input mb-sm"
@@ -582,10 +582,8 @@ export default function FeedbacksPage() {
                                                             const current = formData.customerIds || []
                                                             if (current.includes(c.id)) {
                                                                 setFormData({ ...formData, customerIds: current.filter(id => id !== c.id) })
-                                                            } else if (current.length < 3) {
-                                                                setFormData({ ...formData, customerIds: [...current, c.id] })
                                                             } else {
-                                                                alert('最大3名までしか選択できません。')
+                                                                setFormData({ ...formData, customerIds: [...current, c.id] })
                                                             }
                                                         }}
                                                         style={{ accentColor: 'var(--accent-pink)', width: '16px', height: '16px' }}
