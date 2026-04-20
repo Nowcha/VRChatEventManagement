@@ -16,7 +16,7 @@ import {
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 
-const REACTIONS = ['👍', '❤️', '🎉', '💡', '🔥']
+const REACTIONS = ['❤️', '👍', '🤔', '🕐', '❌']
 
 const STATUS_LABELS = {
     unused: { label: '未使用', className: 'badge-unused' },
@@ -39,6 +39,7 @@ export default function IdeasPage() {
     const [allUsers, setAllUsers] = useState([])
     const [sortOrder, setSortOrder] = useState('desc') // 'desc' = 新しい順, 'asc' = 古い順
     const [reactionFilter, setReactionFilter] = useState(new Set())
+    const [hoveredReaction, setHoveredReaction] = useState(null) // { ideaId, emoji }
 
     // ユーザー一覧取得
     useEffect(() => {
@@ -368,15 +369,13 @@ export default function IdeasPage() {
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                                                 <span className={`idea-badge ${className}`}>{label}</span>
-                                                {isAuthor && (
-                                                    <button
-                                                        className="btn idea-edit-btn"
-                                                        onClick={() => handleEditStart(idea)}
-                                                        title="編集"
-                                                    >
-                                                        ✎
-                                                    </button>
-                                                )}
+                                                <button
+                                                    className="btn idea-edit-btn"
+                                                    onClick={() => handleEditStart(idea)}
+                                                    title="編集"
+                                                >
+                                                    ✎
+                                                </button>
                                             </div>
                                         </div>
 
@@ -391,18 +390,24 @@ export default function IdeasPage() {
                                         {/* リアクション */}
                                         <div className="idea-reactions">
                                             {REACTIONS.map(emoji => {
-                                                const users = idea.reactions?.[emoji] || []
-                                                const reacted = users.includes(user.uid)
+                                                const reactedUsers = idea.reactions?.[emoji] || []
+                                                const reacted = reactedUsers.includes(user.uid)
+                                                const isHovered = hoveredReaction?.ideaId === idea.id && hoveredReaction?.emoji === emoji
+                                                const tooltipNames = reactedUsers.map(uid => allUsers.find(u => u.id === uid)?.displayName || uid).join(', ')
                                                 return (
                                                     <button
                                                         key={emoji}
                                                         className={`idea-reaction-btn ${reacted ? 'idea-reaction-btn--active' : ''}`}
                                                         onClick={() => handleReaction(idea, emoji)}
-                                                        title={reacted ? 'リアクションを取り消す' : 'リアクション'}
+                                                        onMouseEnter={() => reactedUsers.length > 0 && setHoveredReaction({ ideaId: idea.id, emoji })}
+                                                        onMouseLeave={() => setHoveredReaction(null)}
                                                     >
                                                         {emoji}
-                                                        {users.length > 0 && (
-                                                            <span className="idea-reaction-count">{users.length}</span>
+                                                        {reactedUsers.length > 0 && (
+                                                            <span className="idea-reaction-count">{reactedUsers.length}</span>
+                                                        )}
+                                                        {isHovered && tooltipNames && (
+                                                            <span className="idea-reaction-tooltip">{tooltipNames}</span>
                                                         )}
                                                     </button>
                                                 )
@@ -425,34 +430,32 @@ export default function IdeasPage() {
                                                 {idea.status === 'unused' ? '✓ 使用済にする' : '↩ 未使用に戻す'}
                                             </button>
 
-                                            {isAuthor && (
-                                                deleteConfirmId === idea.id ? (
-                                                    <div className="idea-delete-confirm">
-                                                        <span>削除しますか？</span>
-                                                        <button
-                                                            className="btn btn--danger"
-                                                            style={{ padding: '4px 12px', fontSize: '0.8rem' }}
-                                                            onClick={() => handleDelete(idea.id)}
-                                                        >
-                                                            削除
-                                                        </button>
-                                                        <button
-                                                            className="btn btn--secondary"
-                                                            style={{ padding: '4px 12px', fontSize: '0.8rem' }}
-                                                            onClick={() => setDeleteConfirmId(null)}
-                                                        >
-                                                            キャンセル
-                                                        </button>
-                                                    </div>
-                                                ) : (
+                                            {deleteConfirmId === idea.id ? (
+                                                <div className="idea-delete-confirm">
+                                                    <span>削除しますか？</span>
                                                     <button
-                                                        className="btn idea-delete-btn"
-                                                        onClick={() => setDeleteConfirmId(idea.id)}
-                                                        title="削除"
+                                                        className="btn btn--danger"
+                                                        style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+                                                        onClick={() => handleDelete(idea.id)}
                                                     >
-                                                        🗑 削除
+                                                        削除
                                                     </button>
-                                                )
+                                                    <button
+                                                        className="btn btn--secondary"
+                                                        style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+                                                        onClick={() => setDeleteConfirmId(null)}
+                                                    >
+                                                        キャンセル
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    className="btn idea-delete-btn"
+                                                    onClick={() => setDeleteConfirmId(idea.id)}
+                                                    title="削除"
+                                                >
+                                                    🗑 削除
+                                                </button>
                                             )}
                                         </div>
                                     </>

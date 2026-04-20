@@ -1809,6 +1809,7 @@ tr:hover {
 }
 
 .idea-reaction-btn {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1837,6 +1838,23 @@ tr:hover {
 .idea-reaction-count {
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+.idea-reaction-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .idea-actions {
