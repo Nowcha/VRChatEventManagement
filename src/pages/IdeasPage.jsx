@@ -16,7 +16,7 @@ import {
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 
-const REACTIONS = ['❤️', '👍', '🤔', '🕐', '❌']
+const REACTIONS = ['❤️', '👍', '🤔', '❌', '🕐']
 
 const STATUS_LABELS = {
     unused: { label: '未使用', className: 'badge-unused' },
