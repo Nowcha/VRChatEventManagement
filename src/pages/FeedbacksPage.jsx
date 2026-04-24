@@ -15,6 +15,7 @@ export default function FeedbacksPage() {
     const [editingFeedback, setEditingFeedback] = useState(null)
     const [statusFilter, setStatusFilter] = useState(location.state?.statusFilter || 'all') // 'all', 'unwritten', 'written', 'posted'
     const [castFilter, setCastFilter] = useState('all') // 'all' or cast.id
+    const [customerFilter, setCustomerFilter] = useState('all') // 'all' or customer.id
     const [selectedFeedbackIds, setSelectedFeedbackIds] = useState([])
     const [customerSearchText, setCustomerSearchText] = useState('')
     const [isManualEvent, setIsManualEvent] = useState(false)
@@ -212,7 +213,9 @@ export default function FeedbacksPage() {
     const filteredFeedbacks = feedbacks.filter(fb => {
         const matchStatus = statusFilter === 'all' || fb.status === statusFilter
         const matchCast = castFilter === 'all' || fb.assignedCastId === castFilter
-        return matchStatus && matchCast
+        const ids = fb.customerIds?.length > 0 ? fb.customerIds : (fb.customerId ? [fb.customerId] : [])
+        const matchCustomer = customerFilter === 'all' || ids.includes(customerFilter)
+        return matchStatus && matchCast && matchCustomer
     }).sort((a, b) => {
         const dateA = getEventDateObj(a.eventId, a.eventManualInput).getTime();
         const dateB = getEventDateObj(b.eventId, b.eventManualInput).getTime();
@@ -340,6 +343,22 @@ export default function FeedbacksPage() {
                             <option value="all">すべての担当者</option>
                             {allUsers.map(u => (
                                 <option key={u.id} value={u.id}>{u.displayName}</option>
+                            ))}
+                        </select>
+
+                        {/* お客さまフィルタ */}
+                        <select
+                            className="form-select form-select-sm"
+                            style={{ width: 'auto', minWidth: '140px', marginLeft: '8px' }}
+                            value={customerFilter}
+                            onChange={e => {
+                                setCustomerFilter(e.target.value)
+                                setSelectedFeedbackIds([])
+                            }}
+                        >
+                            <option value="all">すべてのお客さま</option>
+                            {customers.map(c => (
+                                <option key={c.id} value={c.id}>{c.vrchatName}</option>
                             ))}
                         </select>
                     </div>
