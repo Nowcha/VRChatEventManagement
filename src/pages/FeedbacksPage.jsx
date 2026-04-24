@@ -16,6 +16,8 @@ export default function FeedbacksPage() {
     const [statusFilter, setStatusFilter] = useState(location.state?.statusFilter || 'all') // 'all', 'unwritten', 'written', 'posted'
     const [castFilter, setCastFilter] = useState('all') // 'all' or cast.id
     const [customerFilter, setCustomerFilter] = useState('all') // 'all' or customer.id
+    const [customerFilterSearch, setCustomerFilterSearch] = useState('')
+    const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
     const [selectedFeedbackIds, setSelectedFeedbackIds] = useState([])
     const [customerSearchText, setCustomerSearchText] = useState('')
     const [isManualEvent, setIsManualEvent] = useState(false)
@@ -346,21 +348,63 @@ export default function FeedbacksPage() {
                             ))}
                         </select>
 
-                        {/* お客さまフィルタ */}
-                        <select
-                            className="form-select form-select-sm"
-                            style={{ width: 'auto', minWidth: '140px', marginLeft: '8px' }}
-                            value={customerFilter}
-                            onChange={e => {
-                                setCustomerFilter(e.target.value)
-                                setSelectedFeedbackIds([])
-                            }}
-                        >
-                            <option value="all">すべてのお客さま</option>
-                            {customers.map(c => (
-                                <option key={c.id} value={c.id}>{c.vrchatName}</option>
-                            ))}
-                        </select>
+                        {/* お客さまフィルタ（検索コンボボックス） */}
+                        <div style={{ position: 'relative', marginLeft: '8px' }}>
+                            {customerFilter !== 'all' ? (
+                                <span style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                                    padding: '4px 10px', borderRadius: '999px',
+                                    background: 'rgba(236, 72, 153, 0.15)', border: '1px solid var(--accent-pink)',
+                                    fontSize: '0.85rem', color: 'var(--accent-pink)', whiteSpace: 'nowrap'
+                                }}>
+                                    {customers.find(c => c.id === customerFilter)?.vrchatName}
+                                    <button
+                                        type="button"
+                                        onClick={() => { setCustomerFilter('all'); setCustomerFilterSearch(''); setSelectedFeedbackIds([]) }}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, color: 'var(--accent-pink)', fontSize: '0.8rem' }}
+                                    >✕</button>
+                                </span>
+                            ) : (
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    style={{ width: '160px', fontSize: '0.85rem', padding: '4px 10px' }}
+                                    placeholder="お客さまで絞り込み..."
+                                    value={customerFilterSearch}
+                                    onChange={e => { setCustomerFilterSearch(e.target.value); setShowCustomerDropdown(true) }}
+                                    onFocus={() => setShowCustomerDropdown(true)}
+                                    onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 150)}
+                                />
+                            )}
+                            {showCustomerDropdown && customerFilter === 'all' && (
+                                <div style={{
+                                    position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 50,
+                                    background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)',
+                                    borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+                                    maxHeight: '200px', overflowY: 'auto', minWidth: '180px'
+                                }}>
+                                    {customers
+                                        .filter(c => c.vrchatName.toLowerCase().includes(customerFilterSearch.toLowerCase()))
+                                        .map(c => (
+                                            <div
+                                                key={c.id}
+                                                onMouseDown={() => { setCustomerFilter(c.id); setCustomerFilterSearch(''); setShowCustomerDropdown(false); setSelectedFeedbackIds([]) }}
+                                                style={{ padding: '8px 14px', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-primary)' }}
+                                                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                {c.vrchatName}
+                                            </div>
+                                        ))
+                                    }
+                                    {customers.filter(c => c.vrchatName.toLowerCase().includes(customerFilterSearch.toLowerCase())).length === 0 && (
+                                        <div style={{ padding: '8px 14px', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                                            見つかりません
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {selectedFeedbackIds.length > 0 && (
