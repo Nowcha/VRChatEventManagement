@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { logOut } from '../firebase'
@@ -5,6 +6,18 @@ import { logOut } from '../firebase'
 export default function Sidebar({ isOpen, onClose }) {
     const { userData } = useAuth()
     const navigate = useNavigate()
+
+    // Escape closes the drawer, matching the overlay tap.
+    useEffect(() => {
+        if (!isOpen) return undefined
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') onClose()
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [isOpen, onClose])
 
     const handleLogout = async () => {
         try {
@@ -38,6 +51,13 @@ export default function Sidebar({ isOpen, onClose }) {
                         <span className="logo-icon">✦</span>
                         <span>Event Manager</span>
                     </div>
+                    <button
+                        className="sidebar-close"
+                        onClick={onClose}
+                        aria-label="メニューを閉じる"
+                    >
+                        ✕
+                    </button>
                 </div>
 
                 <nav className="sidebar-nav">
