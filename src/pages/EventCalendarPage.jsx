@@ -383,29 +383,29 @@ export default function EventCalendarPage() {
             {/* カレンダー本体 */}
             <div className="calendar">
                 {/* カレンダーヘッダー：ナビ + ビュー切替 */}
-                <div className="calendar-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(-1)}>◀</button>
+                <div className="calendar-header calendar-header--tools">
+                    <div className="calendar-nav-group">
+                        <button className="btn btn-ghost btn-sm btn-icon" onClick={() => navigate(-1)} aria-label="前へ">◀</button>
                         <h3 className="calendar-title">{getTitle()}</h3>
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(1)}>▶</button>
-                        <button className="btn btn-ghost btn-sm" onClick={goToday} style={{ marginLeft: '4px', fontSize: '12px' }}>今日</button>
+                        <button className="btn btn-ghost btn-sm btn-icon" onClick={() => navigate(1)} aria-label="次へ">▶</button>
+                        <button className="btn btn-ghost btn-sm calendar-today-btn" onClick={goToday}>今日</button>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                    <div className="calendar-tools">
                         {/* 凡例 */}
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div className="calendar-legend">
                             {[
                                 { key: 'join',  label: 'Join' },
                                 { key: 'reqin', label: 'ReqIn' },
                                 { key: 'group', label: 'Group' },
                             ].map(({ key, label }) => (
-                                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                                    <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: JOIN_COLORS[key].border, flexShrink: 0 }} />
+                                <div key={key} className="calendar-legend-item">
+                                    <div className="calendar-legend-swatch" style={{ background: JOIN_COLORS[key].border }} />
                                     {label}
                                 </div>
                             ))}
                         </div>
                         {/* ビュー切替 */}
-                        <div style={{ display: 'flex', gap: '4px' }}>
+                        <div className="calendar-view-switch">
                             {[
                                 { key: 'month', label: '月' },
                                 { key: 'week',  label: '週' },
@@ -449,16 +449,12 @@ export default function EventCalendarPage() {
                                                 return (
                                                     <div
                                                         key={ev.id}
+                                                        className="calendar-event-chip"
                                                         onClick={() => openDetail(ev)}
                                                         style={{
-                                                            display: 'flex', alignItems: 'center', gap: '3px',
-                                                            padding: '2px 5px', marginBottom: '2px',
                                                             background: col.bg,
                                                             border: `1px solid ${col.border}`,
-                                                            borderRadius: '4px',
-                                                            fontSize: '0.65rem', cursor: 'pointer',
-                                                            color: col.text, fontWeight: '600',
-                                                            overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+                                                            color: col.text,
                                                         }}
                                                     >
                                                         {fmtTime(ev.startAt)} {ev.title}
@@ -572,25 +568,15 @@ function TimeGrid({ days, events, onEventClick }) {
         d.getDate()     === today.getDate()
 
     return (
-        <div style={{ overflowX: 'auto', maxHeight: '680px', overflowY: 'auto' }}>
+        <div className="time-grid">
             {/* 曜日ヘッダー（sticky） */}
-            <div style={{
-                display: 'flex',
-                borderBottom: '1px solid var(--border-subtle)',
-                position: 'sticky', top: 0, zIndex: 2,
-                background: 'var(--bg-card)',
-            }}>
-                <div style={{ width: '56px', flexShrink: 0, padding: '8px' }} />
+            <div className="time-grid-head">
+                <div className="time-grid-gutter time-grid-gutter--head" />
                 {days.map((d, i) => (
                     <div
                         key={i}
-                        style={{
-                            flex: 1, minWidth: 0,
-                            padding: '8px 4px', textAlign: 'center', fontSize: '0.75rem',
-                            fontWeight: 'var(--font-weight-medium)', color: 'var(--text-tertiary)',
-                            borderLeft: '1px solid var(--border-subtle)',
-                            background: isToday(d) ? 'rgba(232,67,147,0.05)' : 'var(--bg-card)',
-                        }}
+                        className="time-grid-col time-grid-headcell"
+                        style={{ background: isToday(d) ? 'rgba(232,67,147,0.05)' : 'var(--bg-card)' }}
                     >
                         <div style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                             {DAY_NAMES[d.getDay()]}
@@ -607,16 +593,11 @@ function TimeGrid({ days, events, onEventClick }) {
             </div>
 
             {/* 時間グリッド */}
-            <div style={{ display: 'flex' }}>
+            <div className="time-grid-body">
                 {/* 時刻軸 */}
-                <div style={{ width: '56px', flexShrink: 0 }}>
+                <div className="time-grid-gutter">
                     {hours.map(h => (
-                        <div key={h} style={{
-                            height: `${HOUR_HEIGHT}px`, borderBottom: '1px solid var(--border-subtle)',
-                            display: 'flex', alignItems: 'flex-start', paddingTop: '2px',
-                            paddingRight: '6px', justifyContent: 'flex-end',
-                            fontSize: '0.65rem', color: 'var(--text-tertiary)',
-                        }}>
+                        <div key={h} className="time-grid-hour-label" style={{ height: `${HOUR_HEIGHT}px` }}>
                             {h < 24 ? `${String(h).padStart(2, '0')}:00` : `${String(h - 24).padStart(2, '0')}:00`}
                         </div>
                     ))}
@@ -628,11 +609,9 @@ function TimeGrid({ days, events, onEventClick }) {
                     return (
                         <div
                             key={di}
+                            className="time-grid-col time-grid-daycol"
                             style={{
-                                flex: 1, minWidth: 0,
-                                position: 'relative',
                                 height: `${totalHeight}px`,
-                                borderLeft: '1px solid var(--border-subtle)',
                                 background: isToday(day) ? 'rgba(232,67,147,0.02)' : 'transparent',
                             }}
                         >
