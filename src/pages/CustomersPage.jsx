@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, Timestamp } from 'firebase/firestore'
 import { db } from '../firebase'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 
 export default function CustomersPage() {
     const [customers, setCustomers] = useState([])
@@ -10,6 +11,8 @@ export default function CustomersPage() {
     const [editingCustomer, setEditingCustomer] = useState(null)
     const [selectedCustomer, setSelectedCustomer] = useState(null)
     const PREDEFINED_TAGS = ['常連', 'VIP', '新規', 'リピーター', '要注意']
+
+    useBodyScrollLock(showModal || selectedCustomer !== null)
     const [formData, setFormData] = useState({
         vrchatName: '',
         firstVisitDate: '',
@@ -177,7 +180,7 @@ export default function CustomersPage() {
                 </div>
 
                 {/* 検索・フィルタ */}
-                <div className="flex gap-md" style={{ flexWrap: 'wrap', marginBottom: '16px' }}>
+                <div className="flex gap-md customer-filter-bar" style={{ flexWrap: 'wrap', marginBottom: '16px' }}>
                     <div className="search-bar">
                         <span className="search-icon">🔍</span>
                         <input
@@ -189,8 +192,7 @@ export default function CustomersPage() {
                     </div>
                     {allTags.length > 0 && (
                         <select
-                            className="form-select"
-                            style={{ width: 'auto', minWidth: '140px' }}
+                            className="form-select customer-tag-filter"
                             value={filterTag}
                             onChange={e => setFilterTag(e.target.value)}
                         >
@@ -207,7 +209,7 @@ export default function CustomersPage() {
             {filteredCustomers.length > 0 ? (
                 <>
                     {/* PC：テーブル */}
-                    <div className="table-container customer-table" style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 260px)' }}>
+                    <div className="table-container customer-table">
                         <table style={{ tableLayout: 'fixed', width: '100%' }}>
                             <colgroup>
                                 <col style={{ width: '15%' }} />

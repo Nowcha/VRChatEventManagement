@@ -3,6 +3,7 @@ import { collection, query, orderBy, getDocs, addDoc, deleteDoc, doc, where } fr
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { db, storage } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 
 export default function GalleryPage() {
     const { user } = useAuth()
@@ -13,6 +14,8 @@ export default function GalleryPage() {
     const [manualDateInput, setManualDateInput] = useState(new Date().toISOString().split('T')[0])
     const [manualTimeSlotInput, setManualTimeSlotInput] = useState('21:00')
     const [lightboxImage, setLightboxImage] = useState(null)
+
+    useBodyScrollLock(lightboxImage !== null)
     const [uploading, setUploading] = useState(false)
     const [loading, setLoading] = useState(true)
 
@@ -161,8 +164,8 @@ export default function GalleryPage() {
                 </div>
 
                 {/* アップロード・フィルタ */}
-                <div className="flex gap-md" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="flex gap-md gallery-toolbar" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <div className="gallery-toolbar-source" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div className="flex gap-sm" style={{ alignItems: 'center' }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                                 <input
@@ -185,8 +188,7 @@ export default function GalleryPage() {
                         </div>
                         {!isManualUploadEvent ? (
                             <select
-                                className="form-select"
-                                style={{ width: 'auto', minWidth: '200px' }}
+                                className="form-select gallery-event-select"
                                 value={selectedEventId}
                                 onChange={e => setSelectedEventId(e.target.value)}
                             >
@@ -198,19 +200,17 @@ export default function GalleryPage() {
                                 ))}
                             </select>
                         ) : (
-                            <div className="flex gap-sm">
+                            <div className="flex gap-sm gallery-manual-inputs">
                                 <input
                                     type="date"
-                                    className="form-input"
+                                    className="form-input gallery-manual-date"
                                     value={manualDateInput}
                                     onChange={e => setManualDateInput(e.target.value)}
-                                    style={{ minWidth: '150px' }}
                                 />
                                 <select
-                                    className="form-select"
+                                    className="form-select gallery-manual-slot"
                                     value={manualTimeSlotInput}
                                     onChange={e => setManualTimeSlotInput(e.target.value)}
-                                    style={{ width: '120px' }}
                                 >
                                     <option value="21:00">21:00</option>
                                     <option value="24:00">24:00</option>
@@ -220,7 +220,7 @@ export default function GalleryPage() {
                     </div>
 
                     {(selectedEventId || (isManualUploadEvent && manualDateInput && manualTimeSlotInput)) && (
-                        <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
+                        <label className="btn btn-primary gallery-upload-btn" style={{ cursor: 'pointer' }}>
                             {uploading ? 'アップロード中...' : '📷 写真をアップロード'}
                             <input
                                 type="file"
@@ -279,19 +279,13 @@ export default function GalleryPage() {
             {/* ライトボックス */}
             {lightboxImage && (
                 <div className="lightbox-overlay" onClick={() => setLightboxImage(null)}>
-                    <div onClick={e => e.stopPropagation()} style={{ position: 'relative' }}>
+                    <div className="lightbox-frame" onClick={e => e.stopPropagation()}>
                         <img
                             src={lightboxImage.imageUrl}
                             alt="拡大表示"
                             className="lightbox-image"
                         />
-                        <div style={{
-                            position: 'absolute',
-                            top: '-40px',
-                            right: '0',
-                            display: 'flex',
-                            gap: '8px'
-                        }}>
+                        <div className="lightbox-actions">
                             <button
                                 className="btn btn-danger btn-sm"
                                 onClick={() => handleDelete(lightboxImage)}
