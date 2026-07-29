@@ -1,3 +1,5 @@
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
+
 const FREQUENCY_LABELS = {
     daily: '毎日',
     weekly: '毎週',
@@ -42,6 +44,8 @@ function formatRecurringRule(rule) {
 }
 
 export default function EventDetailModal({ event, managedUntil, onEdit, onDelete, onClose }) {
+    useBodyScrollLock(true)
+
     const startStr = formatDatetime(event.startAt)
     const endStr = event.endAt ? formatDatetime(event.endAt) : null
     const joinStr = formatJoinMethod(event)

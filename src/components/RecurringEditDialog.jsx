@@ -1,4 +1,8 @@
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
+
 export default function RecurringEditDialog({ mode, onSelect, onCancel }) {
+    useBodyScrollLock(true)
+
     // mode: 'edit' | 'delete'
     const options = [
         { value: 'this', label: 'この回のみ変更' },
