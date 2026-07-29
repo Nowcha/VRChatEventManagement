@@ -3,6 +3,7 @@ import { collection, query, orderBy, where, getDocs, addDoc, updateDoc, doc, Tim
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 
 export default function ShiftsPage() {
     const { user } = useAuth()
@@ -21,6 +22,8 @@ export default function ShiftsPage() {
 
     // イベント詳細モーダル
     const [showEventDetail, setShowEventDetail] = useState(null)
+
+    useBodyScrollLock(showEventDetail !== null)
     const [editTimeSlot, setEditTimeSlot] = useState('')
     const [editMemo, setEditMemo] = useState('')
 
@@ -76,6 +79,14 @@ export default function ShiftsPage() {
     }
 
     const candidateEvents = events.filter(e => e.status === 'candidate')
+
+    // Shared by the desktop table and the mobile card list so both stay in sync.
+    const sortedCandidateEvents = [...candidateEvents].sort((a, b) => {
+        const dateA = a.date ? new Date(a.date.getFullYear(), a.date.getMonth(), a.date.getDate()).getTime() : 0
+        const dateB = b.date ? new Date(b.date.getFullYear(), b.date.getMonth(), b.date.getDate()).getTime() : 0
+        if (dateA !== dateB) return dateA - dateB
+        return (a.timeSlot || '').localeCompare(b.timeSlot || '')
+    })
 
     // ============================
     //  ① 候補日一括提案
@@ -388,7 +399,7 @@ export default function ShiftsPage() {
             </div>
 
             {/* タブ切り替え */}
-            <div className="flex gap-sm mb-lg" style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
+            <div className="flex gap-sm mb-lg tab-bar" style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
                 {[
                     { key: 'calendar', icon: '📅', label: 'カレンダー' },
                     { key: 'propose', icon: '📝', label: '候補日提案' },
@@ -577,6 +588,7 @@ export default function ShiftsPage() {
                                                         return (
                                                             <div
                                                                 key={ts}
+                                                                className="propose-slot"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation()
                                                                     toggleProposeTimeSlot(dateStr, ts)
@@ -585,13 +597,7 @@ export default function ShiftsPage() {
                                                                     border: `1.5px solid ${isTsSelected ? 'var(--accent-pink)' : 'var(--color-black)'}`,
                                                                     backgroundColor: isTsSelected ? 'rgba(232, 67, 147, 0.1)' : 'var(--bg-secondary)',
                                                                     color: isTsSelected ? 'var(--accent-pink)' : 'var(--text-tertiary)',
-                                                                    borderRadius: '4px',
-                                                                    padding: '2px 0',
-                                                                    textAlign: 'center',
-                                                                    fontSize: '0.75rem',
                                                                     fontWeight: isTsSelected ? 'bold' : 'normal',
-                                                                    cursor: 'pointer',
-                                                                    transition: 'all 0.2s'
                                                                 }}
                                                             >
                                                                 {ts}
@@ -650,8 +656,8 @@ export default function ShiftsPage() {
                                 </p>
                             </div>
 
-                            {/* 出欠テーブル */}
-                            <div className="table-container">
+                            {/* 出欠テーブル（PC） */}
+                            <div className="table-container vote-table">
                                 <table>
                                     <thead>
                                         <tr>
@@ -667,13 +673,7 @@ export default function ShiftsPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {candidateEvents
-                                            .sort((a, b) => {
-                                                const dateA = a.date ? new Date(a.date.getFullYear(), a.date.getMonth(), a.date.getDate()).getTime() : 0;
-                                                const dateB = b.date ? new Date(b.date.getFullYear(), b.date.getMonth(), b.date.getDate()).getTime() : 0;
-                                                if (dateA !== dateB) return dateA - dateB;
-                                                return (a.timeSlot || '').localeCompare(b.timeSlot || '');
-                                            })
+                                        {sortedCandidateEvents
                                             .map(ev => {
                                                 const summary = getVoteSummary(ev.id)
                                                 return (
@@ -781,6 +781,76 @@ export default function ShiftsPage() {
                                             })}
                                     </tbody>
                                 </table>
+                            </div>
+
+                            {/* 出欠カード（モバイル）
+                                列数が人数に比例して増えるテーブルは狭幅で成立しないため、
+                                1候補日=1カードに組み替えて縦に並べる。 */}
+                            <div className="vote-cards">
+                                {sortedCandidateEvents.map(ev => {
+                                    const summary = getVoteSummary(ev.id)
+                                    const myVote = getMyVote(ev.id)
+                                    return (
+                                        <div key={ev.id} className="card vote-card">
+                                            <div className="vote-card-header">
+                                                <div className="vote-card-date">{formatDate(ev.date)}</div>
+                                                <span className="vote-card-slot">{ev.timeSlot}</span>
+                                            </div>
+
+                                            <div className="vote-card-me">
+                                                <span className="vote-card-label">あなたの出欠</span>
+                                                <div className="vote-card-me-buttons">
+                                                    <button
+                                                        className={`btn btn-sm ${myVote === 'available' ? 'btn-primary' : 'btn-secondary'}`}
+                                                        onClick={() => handleVote(ev.id, 'available')}
+                                                    >
+                                                        ○ 出勤可
+                                                    </button>
+                                                    <button
+                                                        className={`btn btn-sm ${myVote === 'unavailable' ? 'btn-danger' : 'btn-secondary'}`}
+                                                        onClick={() => handleVote(ev.id, 'unavailable')}
+                                                    >
+                                                        ✕ 欠勤
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="vote-card-members">
+                                                <div className="vote-card-label">
+                                                    メンバー
+                                                    <span className="vote-card-summary">{summary.available}/{summary.total}</span>
+                                                </div>
+                                                <div className="vote-card-member-list">
+                                                    {allUsers.map(u => {
+                                                        const vote = shifts.find(s => s.eventId === ev.id && s.userId === u.id)
+                                                        const isProposerAutoAvailable = u.id === ev.createdBy && !vote
+                                                        const status = isProposerAutoAvailable ? 'available' : vote?.status
+                                                        return (
+                                                            <div key={u.id} className="vote-card-member">
+                                                                <span className="vote-card-member-name">{u.displayName}</span>
+                                                                <span className={`vote-card-mark vote-card-mark--${status || 'none'}`}>
+                                                                    {status === 'available' ? '○' : status === 'unavailable' ? '✕' : '—'}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+
+                                            <div className="vote-card-actions">
+                                                <button className="btn btn-primary btn-sm" onClick={() => handleConfirmEvent(ev.id)}>
+                                                    開催
+                                                </button>
+                                                <button className="btn btn-secondary btn-sm" onClick={() => handleCancelEvent(ev.id)}>
+                                                    不開催
+                                                </button>
+                                                <button className="btn btn-danger btn-sm" onClick={() => handleCancelCandidate(ev.id)}>
+                                                    削除
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </>
                     ) : (
