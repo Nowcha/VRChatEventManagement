@@ -78,7 +78,23 @@
 
   /* Layout */
   --sidebar-width: 260px;
-  --header-height: 60px;
+  --header-height: 56px;
+
+  /* Safe area insets (iPhone notch / home indicator).
+     Fallback to 0px so non-notched devices and desktop are unaffected. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Minimum comfortable touch target on mobile (WCAG 2.5.5 / iOS HIG) */
+  --touch-target: 44px;
+}
+
+@media (min-width: 1025px) {
+  :root {
+    --header-height: 60px;
+  }
 }
 
 /* ---------- Reset & Base ---------- */
@@ -104,7 +120,30 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
+  /* Prevent iOS Safari from silently up-scaling text in landscape */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Locks background scrolling while a sidebar / modal is open.
+   Toggled from JS via useBodyScrollLock. */
+body.is-scroll-locked {
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Remove the grey flash iOS/Android paint over every tapped element,
+   we provide our own :active states instead. */
+button,
+a,
+[role='button'],
+input,
+select,
+textarea,
+label {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body::before {
@@ -154,13 +193,18 @@ h3 {
 .app-layout {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .main-content {
   flex: 1;
+  /* min-width:0 stops wide children (tables, time grids) from stretching
+     the flex item and creating a horizontal scrollbar on the whole page. */
+  min-width: 0;
   margin-left: var(--sidebar-width);
   padding: var(--space-2xl);
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* ---------- Sidebar ---------- */
@@ -170,17 +214,54 @@ h3 {
   top: 0;
   width: var(--sidebar-width);
   height: 100vh;
+  height: 100dvh;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   z-index: 100;
   backdrop-filter: blur(20px);
+  padding-left: var(--safe-left);
+  /* Own scroll container so long nav lists never scroll the page behind it */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sidebar-header {
   padding: var(--space-xl) var(--space-lg);
+  padding-top: calc(var(--space-xl) + var(--safe-top));
   border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+/* Close button lives inside the drawer on mobile; hidden on desktop
+   where the sidebar is permanent. */
+.sidebar-close {
+  display: none;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: calc(var(--space-sm) * -1);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.sidebar-close:active {
+  background: var(--bg-glass-active);
+  color: var(--text-primary);
 }
 
 .sidebar-logo {
@@ -192,6 +273,15 @@ h3 {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  /* Keep the wordmark on one line — the drawer's close button competes for
+     the same row and would otherwise wrap it. */
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.sidebar-logo > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-logo .logo-icon {
@@ -250,13 +340,17 @@ h3 {
 
 .sidebar-footer {
   padding: var(--space-lg);
+  padding-bottom: calc(var(--space-lg) + var(--safe-bottom));
   border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  /* Tight gap: the 260px drawer has to fit avatar + name + logout button,
+     and the name is the only part worth spending width on. */
+  gap: var(--space-sm);
   padding: var(--space-sm);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -299,6 +393,40 @@ h3 {
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.logout-btn:hover:not(:disabled),
+.logout-btn:active:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+  background: var(--bg-glass);
+}
+
+.logout-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sidebar-footer-error {
+  margin-top: var(--space-sm);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #ef4444;
 }
 
 /* ---------- Sticky Header ---------- */
@@ -528,6 +656,10 @@ h3 {
   overflow-x: auto;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
+  /* Momentum scrolling on iOS, and don't chain the scroll to the page
+     when the user reaches the end of the table. */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 table {
@@ -728,16 +860,20 @@ tr:hover {
   z-index: 1000;
   padding: var(--space-lg);
   animation: fadeIn var(--transition-normal) ease;
+  overscroll-behavior: contain;
 }
 
 .modal {
+  display: flex;
+  flex-direction: column;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   max-width: 560px;
   width: 100%;
   max-height: 90vh;
-  overflow-y: auto;
+  max-height: 90dvh;
+  overflow: hidden;
   box-shadow: var(--shadow-lg);
   animation: slideUp var(--transition-slow) ease;
 }
@@ -746,13 +882,16 @@ tr:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-sm);
   padding: var(--space-lg) var(--space-xl);
   border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 
 .modal-title {
   font-family: var(--font-serif);
   font-size: 1.2rem;
+  min-width: 0;
 }
 
 .modal-close {
@@ -761,6 +900,7 @@ tr:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   border-radius: var(--radius-sm);
   border: none;
   background: transparent;
@@ -775,16 +915,35 @@ tr:hover {
   background: var(--bg-glass);
 }
 
+/* CustomersPage / FeedbacksPage wrap body+footer in a <form>. Without this
+   the form would break the flex chain and .modal's overflow:hidden would
+   clip the (now unscrollable) body. */
+.modal > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* The body is the only scrolling region, so the header and footer stay
+   pinned. This matters most on mobile where the sheet fills the screen. */
 .modal-body {
   padding: var(--space-xl);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: var(--space-md);
   padding: var(--space-lg) var(--space-xl);
   border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 
 /* ---------- Search Bar ---------- */
@@ -967,22 +1126,55 @@ tr:hover {
   justify-content: center;
   z-index: 2000;
   cursor: pointer;
+  overscroll-behavior: contain;
+}
+
+.lightbox-frame {
+  position: relative;
+  cursor: default;
 }
 
 .lightbox-image {
+  display: block;
   max-width: 90vw;
   max-height: 90vh;
+  max-height: 90dvh;
   object-fit: contain;
   border-radius: var(--radius-sm);
+}
+
+.lightbox-actions {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  display: flex;
+  gap: 8px;
+}
+
+/* GalleryPage: ツールバー */
+.gallery-event-select {
+  width: auto;
+  min-width: 200px;
+}
+
+.gallery-manual-date {
+  min-width: 150px;
+}
+
+.gallery-manual-slot {
+  width: 120px;
 }
 
 /* ---------- Login Page ---------- */
 .login-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-lg);
+  padding-top: calc(var(--space-lg) + var(--safe-top));
+  padding-bottom: calc(var(--space-lg) + var(--safe-bottom));
   position: relative;
 }
 
@@ -1121,8 +1313,8 @@ tr:hover {
 /* ---------- Toast / Notification ---------- */
 .toast {
   position: fixed;
-  bottom: var(--space-xl);
-  right: var(--space-xl);
+  bottom: calc(var(--space-xl) + var(--safe-bottom));
+  right: calc(var(--space-xl) + var(--safe-right));
   background: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
@@ -1318,6 +1510,18 @@ tr:hover {
   background: rgba(220, 50, 50, 0.1);
 }
 
+.customer-tag-filter {
+  width: auto;
+  min-width: 140px;
+}
+
+.customer-table {
+  overflow-y: auto;
+  /* dvh (not vh) so the mobile browser's collapsing toolbar is accounted for,
+     and a floor so a landscape phone doesn't shrink this to ~130px. */
+  max-height: max(320px, calc(100dvh - 260px));
+}
+
 /* ---------- FeedbacksPage Card Layout ---------- */
 .feedback-card {
   display: flex;
@@ -1354,15 +1558,335 @@ tr:hover {
   padding-right: 24px;
 }
 
+/* FeedbacksPage: フィルタ行 */
+.feedback-filter-select {
+  width: auto;
+  min-width: 140px;
+  margin-left: 8px;
+}
+
+.feedback-customer-combo {
+  position: relative;
+  margin-left: 8px;
+}
+
+.feedback-customer-input {
+  width: 160px;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+}
+
+.feedback-customer-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  max-height: 200px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-width: 180px;
+}
+
+.feedback-bulk-select {
+  width: auto;
+  min-width: 150px;
+}
+
+/* ---------- EventCalendarModal ---------- */
+.event-datetime-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.recurring-end-option {
+  /* The date / count inputs sit on the same row as the radio label;
+     let them drop to the next line instead of overflowing the sheet. */
+  flex-wrap: wrap;
+  row-gap: var(--space-xs);
+}
+
+/* ---------- EventCalendarPage: ヘッダー ---------- */
+.calendar-nav-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.calendar-nav-group .calendar-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-today-btn {
+  margin-left: var(--space-xs);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.calendar-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.calendar-legend {
+  display: flex;
+  gap: 10px;
+}
+
+.calendar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.calendar-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.calendar-view-switch {
+  display: flex;
+  gap: 4px;
+}
+
+/* 月ビューのイベントチップ */
+.calendar-event-chip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  margin-bottom: 2px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- EventCalendarPage: 週/日ビューの時間グリッド ---------- */
+.time-grid {
+  overflow-x: auto;
+  overflow-y: auto;
+  /* 680px is right on a desktop, but taller than a landscape phone
+     (~390px). Cap by viewport height too so the grid always fits. */
+  max-height: 680px;
+  max-height: min(680px, 70dvh);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* width:max-content lets the sticky header row grow with the columns when
+   they hit their min-width and the grid starts scrolling horizontally. */
+.time-grid-head,
+.time-grid-body {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+}
+
+.time-grid-head {
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-card);
+}
+
+.time-grid-gutter {
+  width: 56px;
+  flex-shrink: 0;
+}
+
+.time-grid-gutter--head {
+  padding: 8px;
+}
+
+.time-grid-hour-label {
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 2px;
+  padding-right: 6px;
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+}
+
+.time-grid-col {
+  flex: 1;
+  min-width: 0;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.time-grid-headcell {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-tertiary);
+}
+
+.time-grid-daycol {
+  position: relative;
+}
+
+/* ---------- ShiftsPage: 出欠カード（モバイル用） ---------- */
+.vote-cards {
+  /* Hidden until the mobile breakpoint; the table is the default view. */
+  display: none;
+}
+
+.vote-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.vote-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.vote-card-date {
+  font-size: 1rem;
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-serif);
+}
+
+.vote-card-slot {
+  flex-shrink: 0;
+  border: 1.5px solid var(--accent-pink);
+  background: rgba(232, 67, 147, 0.1);
+  color: var(--accent-pink);
+  border-radius: var(--radius-sm);
+  padding: 2px 12px;
+  font-size: 0.85rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.vote-card-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-sm);
+}
+
+.vote-card-summary {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.vote-card-me-buttons {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.vote-card-me-buttons .btn {
+  flex: 1;
+}
+
+.vote-card-member-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-xs) var(--space-md);
+}
+
+.vote-card-member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: 2px 0;
+  min-width: 0;
+}
+
+.vote-card-member-name {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vote-card-mark {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.vote-card-mark--available {
+  color: var(--color-black);
+}
+
+.vote-card-mark--unavailable {
+  color: var(--color-dark-gray);
+}
+
+.vote-card-mark--none {
+  color: var(--text-tertiary);
+}
+
+.vote-card-actions {
+  display: flex;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.vote-card-actions .btn {
+  flex: 1;
+}
+
+/* ShiftsPage: 候補日提案カレンダーの時間帯チップ */
+.propose-slot {
+  border-radius: 4px;
+  padding: 3px 0;
+  text-align: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
   .main-content {
     margin-left: 0;
     padding: var(--space-lg);
-    padding-top: calc(var(--header-height) + var(--space-lg));
+    padding-top: calc(var(--header-height) + var(--safe-top) + var(--space-lg));
+    padding-left: calc(var(--space-lg) + var(--safe-left));
+    padding-right: calc(var(--space-lg) + var(--safe-right));
+    padding-bottom: calc(var(--space-lg) + var(--safe-bottom));
   }
 
   .sidebar {
+    /* max-width keeps the drawer from covering the whole screen on
+       narrow phones, so the overlay stays tappable to dismiss. */
+    width: min(var(--sidebar-width), 82vw);
     transform: translateX(-100%);
     transition: transform var(--transition-normal);
   }
@@ -1383,6 +1907,28 @@ tr:hover {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  /* Comfortable tap targets in the drawer */
+  .nav-link {
+    min-height: var(--touch-target);
+    font-size: 0.95rem;
+  }
+
+  .logout-btn {
+    width: var(--touch-target);
+    height: var(--touch-target);
+    /* Reclaim the extra tap padding so it doesn't eat into the user name */
+    margin-right: calc(var(--space-sm) * -1);
+  }
+
+  .sticky-header {
+    /* The fixed mobile header already occupies the top of the viewport */
+    top: calc(var(--header-height) + var(--safe-top));
+    /* Keep the negative margin in step with .main-content's padding,
+       otherwise the header is pulled up under the fixed mobile header. */
+    margin-top: calc(var(--space-lg) * -1);
+    padding-top: var(--space-lg);
+  }
 }
 
 /* ===== モバイル（768px以下） ===== */
@@ -1391,7 +1937,10 @@ tr:hover {
   /* ---- 余白・レイアウト ---- */
   .main-content {
     padding: var(--space-md);
-    padding-top: calc(var(--header-height) + var(--space-md));
+    padding-top: calc(var(--header-height) + var(--safe-top) + var(--space-md));
+    padding-left: calc(var(--space-md) + var(--safe-left));
+    padding-right: calc(var(--space-md) + var(--safe-right));
+    padding-bottom: calc(var(--space-2xl) + var(--safe-bottom));
   }
 
   .sticky-header {
@@ -1408,13 +1957,36 @@ tr:hover {
   .page-header .flex.justify-between,
   .page-header .flex.items-center.justify-between {
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-sm);
+    align-items: stretch;
+    gap: var(--space-md);
+  }
+
+  /* 縦積みになった主要アクションは全幅で押しやすく */
+  .page-header .flex.justify-between > .btn,
+  .page-header .flex.items-center.justify-between > .btn {
+    width: 100%;
   }
 
   /* ---- タイポグラフィ ---- */
   .page-title {
     font-size: 1.4rem;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+
+  /* ---- カード ---- */
+  .card {
+    padding: var(--space-md);
   }
 
   /* ---- 統計グリッド ---- */
@@ -1425,6 +1997,14 @@ tr:hover {
 
   .stat-card {
     padding: var(--space-md);
+  }
+
+  .stat-value {
+    font-size: 1.6rem;
+  }
+
+  .stat-icon {
+    margin-bottom: var(--space-sm);
   }
 
   /* ---- 検索バー ---- */
@@ -1439,15 +2019,88 @@ tr:hover {
   }
 
   /* ---- カレンダー ---- */
+  .calendar-header {
+    padding: var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  /* 凡例とビュー切替を持つ EventCalendarPage のヘッダーだけ縦積みにする。
+     ShiftsPage の「◀ 年月 ▶」だけのヘッダーは横並びのまま維持する。 */
+  .calendar-header--tools {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* ナビとツールをそれぞれ全幅の行に */
+  .calendar-nav-group {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .calendar-tools {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: var(--space-sm);
+  }
+
+  .calendar-legend {
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .calendar-view-switch .btn {
+    /* 月/週/日は1文字ラベルなので最小幅で十分だが指で押せる高さは確保 */
+    min-width: 40px;
+    padding: var(--space-xs) var(--space-sm);
+  }
+
   .calendar-day {
-    min-height: 88px;
-    padding: 4px;
+    min-height: 84px;
+    padding: 3px;
     overflow: hidden;
   }
 
+  .calendar-event-chip {
+    font-size: 0.58rem;
+    padding: 2px 3px;
+    letter-spacing: -0.02em;
+  }
+
+  /* 週/日ビュー：列を潰さず横スクロールに切り替える。
+     minWidth:0 のままだと 375px 幅で1列45px になり判読できない。 */
+  .time-grid-col {
+    min-width: 76px;
+  }
+
+  .time-grid-gutter {
+    width: 44px;
+    /* 時刻軸は横スクロールしても残す */
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: var(--bg-card);
+  }
+
+  .time-grid-gutter--head {
+    z-index: 4;
+  }
+
+  .calendar-day-header {
+    font-size: 0.6rem;
+    padding: var(--space-xs) 2px;
+    letter-spacing: 0.02em;
+  }
+
+  .calendar-day-number {
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+  }
+
   .calendar-event-dot {
-    font-size: 0.65rem;
-    padding: 2px 4px;
+    font-size: 0.6rem;
+    padding: 2px 3px;
     flex-direction: row;
   }
 
@@ -1456,51 +2109,186 @@ tr:hover {
     display: none;
   }
 
-  /* ---- モーダル ---- */
+  /* ---- モーダル：ボトムシート化 ----
+     実装側のクラスは .modal（旧 .modal-content 指定は当たっていなかった） */
   .modal-overlay {
-    padding: var(--space-sm);
+    padding: 0;
     align-items: flex-end;
   }
 
-  .modal-content {
+  .modal {
     max-width: 100%;
     width: 100%;
     max-height: 92vh;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    max-height: 92dvh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-bottom: none;
+  }
+
+  .modal-header {
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .modal-body {
+    padding: var(--space-lg);
+  }
+
+  .modal-footer {
+    padding: var(--space-md) var(--space-lg);
+    padding-bottom: calc(var(--space-md) + var(--safe-bottom));
+    gap: var(--space-sm);
+  }
+
+  /* フッターの操作は指で押せる幅に伸ばす */
+  .modal-footer .btn {
+    flex: 1;
+    min-height: var(--touch-target);
+  }
+
+  .modal-close {
+    width: var(--touch-target);
+    height: var(--touch-target);
   }
 
   /* ---- タッチターゲット確保 ---- */
   .btn {
-    min-height: 40px;
+    min-height: var(--touch-target);
+  }
+
+  .btn-sm {
+    min-height: 36px;
+    padding: var(--space-xs) var(--space-md);
+  }
+
+  .btn-icon {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+
+  /* ---- フォーム：iOS のフォーカス時オートズーム防止 ----
+     iOS Safari は 16px 未満の入力欄にフォーカスするとページを拡大する。 */
+  .form-input,
+  .form-select,
+  .form-textarea,
+  .search-bar input,
+  input[type='text'],
+  input[type='date'],
+  input[type='time'],
+  input[type='number'],
+  input[type='email'],
+  input[type='password'],
+  input[type='search'],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    min-height: var(--touch-target);
+  }
+
+  .form-textarea {
+    min-height: 120px;
+  }
+
+  .form-group {
+    margin-bottom: var(--space-md);
+  }
+
+  /* 幅指定つきのフィルタ用 select / input はモバイルでは全幅に寄せる */
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    width: 100%;
+  }
+
+  .filter-row > * {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 
   /* ---- FeedbacksPage フィルター折り返し ---- */
+  .feedback-filter-bar {
+    gap: var(--space-sm);
+  }
+
   .feedback-status-filter {
+    flex-direction: column;
+    align-items: stretch;
     flex-wrap: wrap;
     gap: var(--space-sm);
+    width: 100%;
+  }
+
+  /* ステータスタブは4件を等幅で1行に収める */
+  .feedback-status-filter > .flex {
+    width: 100%;
+  }
+
+  .feedback-status-filter > .flex > .btn {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+  }
+
+  /* 幅固定のフィルタ類をモバイルでは全幅に */
+  .feedback-filter-select,
+  .feedback-customer-combo,
+  .feedback-customer-input,
+  .feedback-bulk-select {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+  }
+
+  .feedback-customer-input {
+    /* 0.85rem のままだと iOS がフォーカス時にズームする */
+    font-size: 16px;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .feedback-customer-dropdown {
+    right: 0;
+    min-width: 0;
+  }
+
+  .feedback-bulk-bar {
+    width: 100%;
+    flex-wrap: wrap;
   }
 
   /* ---- FeedbacksPage フィードバックカード ---- */
   .feedback-card {
-    flex-direction: column;
+    flex-direction: row;
+    align-items: flex-start;
     padding: var(--space-md);
-    gap: var(--space-md);
-    align-items: stretch;
+    gap: var(--space-sm);
+  }
+
+  .feedback-card-body {
+    min-width: 0;
+    gap: var(--space-sm);
   }
 
   .feedback-card-columns {
     flex-direction: column;
+    gap: var(--space-sm);
   }
 
   .feedback-card-meta {
     flex: none;
     width: 100%;
     margin-right: 0;
-    margin-bottom: var(--space-md);
+    gap: var(--space-xs);
   }
 
   .feedback-card-content {
     padding-right: 0;
+    min-width: 0;
   }
 
   /* フィードバックカード内テキストのフォントサイズ縮小 */
@@ -1511,7 +2299,27 @@ tr:hover {
     font-size: 0.875rem !important;
   }
 
-  /* ---- ShiftsPage 出欠操作ボタン ---- */
+  /* ラベル列の固定 100px を詰めて本文の幅を稼ぐ */
+  .feedback-card-meta > div > span:first-child {
+    width: 72px !important;
+    flex-shrink: 0;
+  }
+
+  .feedback-card-meta > div > span:nth-child(2) {
+    margin-right: var(--space-sm) !important;
+  }
+
+  /* ---- ShiftsPage 出欠：テーブル→カード切り替え ---- */
+  .vote-table {
+    display: none;
+  }
+
+  .vote-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
   .vote-action-buttons {
     flex-direction: column;
     gap: 4px;
@@ -1523,7 +2331,30 @@ tr:hover {
     min-height: 36px;
   }
 
-  /* ---- タブバー ---- */
+  /* 提案カレンダーのセルは狭いので時間帯チップを詰める */
+  .propose-slot {
+    font-size: 0.6rem;
+    padding: 2px 0;
+    letter-spacing: -0.02em;
+  }
+
+  /* ---- タブバー：横スクロール可能に ---- */
+  .tab-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-bar > .btn {
+    flex-shrink: 0;
+  }
+
   .tab-btn {
     font-size: 0.8rem;
     padding: 6px 10px;
@@ -1539,16 +2370,224 @@ tr:hover {
     flex-direction: column;
     gap: 12px;
   }
+
+  .customer-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
+
+  .customer-tag-filter {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .customer-card-icon-btn {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+
+  /* ---- SettingsPage 招待URL ---- */
+  .invite-url-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
+
+  .invite-url-row .btn {
+    width: 100%;
+  }
+
+  /* ---- IdeasPage ---- */
+  .ideas-filter-row {
+    gap: var(--space-xs);
+  }
+
+  .ideas-reaction-filter {
+    padding-left: var(--space-xs);
+    flex-wrap: wrap;
+  }
+
+  .ideas-reaction-filter-btn,
+  .idea-reaction-btn {
+    min-height: 36px;
+    padding: 4px 10px;
+  }
+
+  .idea-actions {
+    gap: var(--space-xs);
+  }
+
+  .idea-delete-btn,
+  .idea-delete-confirm {
+    margin-left: 0;
+  }
+
+  /* ---- ギャラリー ---- */
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-sm);
+  }
+
+  /* タップ端末ではホバーが無いので常時オーバーレイ表示 */
+  .gallery-item-overlay {
+    opacity: 1;
+    padding: var(--space-sm);
+  }
+
+  /* ツールバーは縦積み＋全幅 */
+  .gallery-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .gallery-toolbar-source {
+    width: 100%;
+  }
+
+  .gallery-event-select,
+  .gallery-manual-date,
+  .gallery-manual-slot,
+  .gallery-upload-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .gallery-manual-inputs {
+    width: 100%;
+  }
+
+  .gallery-manual-date {
+    flex: 1 1 60%;
+  }
+
+  .gallery-manual-slot {
+    flex: 1 1 35%;
+  }
+
+  /* ライトボックス：画像上部の負マージン配置は画面外に出るため
+     画面下部の固定バーに変更する */
+  .lightbox-image {
+    max-width: 100vw;
+    max-height: calc(100dvh - 96px - var(--safe-bottom));
+  }
+
+  .lightbox-actions {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    padding-bottom: calc(var(--space-md) + var(--safe-bottom));
+    background: linear-gradient(transparent, rgba(5, 5, 16, 0.9) 40%);
+  }
+
+  .lightbox-actions .btn {
+    flex: 1;
+    max-width: 180px;
+  }
+
+  /* ---- 空状態 ---- */
+  .empty-state {
+    padding: var(--space-2xl) var(--space-md);
+  }
+
+  /* ---- トースト：モバイルは下部全幅 ---- */
+  .toast {
+    left: calc(var(--space-md) + var(--safe-left));
+    right: calc(var(--space-md) + var(--safe-right));
+    bottom: calc(var(--space-md) + var(--safe-bottom));
+  }
 }
 
 /* ===== 小型スマートフォン（480px以下） ===== */
 @media (max-width: 480px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .stat-card {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
   }
 
   .gallery-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .calendar-day {
+    min-height: 72px;
+  }
+
+  .login-card {
+    padding: var(--space-2xl) var(--space-lg);
+  }
+
+  /* 開始/終了日時を縦積みに。
+     <input type="date"> は 16px 時に約162pxの最小幅を持ち 1fr では縮まないため、
+     2カラムのままだと 320px 幅でシートからはみ出す。 */
+  .event-datetime-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .recurring-end-date,
+  .recurring-end-count {
+    margin-left: 0 !important;
+  }
+
+  .recurring-end-date {
+    width: 100% !important;
+  }
+}
+
+/* ===== ホバーできない端末（タッチ）向けの調整 ===== */
+@media (hover: none) {
+  /* ホバー前提の演出は無効化し、タップ時のフィードバックに寄せる */
+  .card:hover,
+  .stat-card:hover,
+  .gallery-item:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .stat-card:hover::before {
+    opacity: 0;
+  }
+
+  .btn-primary:hover {
+    transform: none;
+  }
+
+  tr:hover {
+    background: transparent;
+  }
+}
+
+/* ===== モーション低減設定の尊重 ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -1559,31 +2598,39 @@ tr:hover {
   top: 0;
   left: 0;
   right: 0;
-  height: var(--header-height);
+  /* Grow by the notch height so content sits below the status bar */
+  height: calc(var(--header-height) + var(--safe-top));
+  padding-top: var(--safe-top);
+  padding-left: calc(var(--space-md) + var(--safe-left));
+  padding-right: calc(var(--space-md) + var(--safe-right));
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
   align-items: center;
-  padding: 0 var(--space-lg);
   z-index: 99;
   backdrop-filter: blur(20px);
 }
 
 .menu-toggle {
-  width: 40px;
-  height: 40px;
+  width: var(--touch-target);
+  height: var(--touch-target);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  /* Pull back the extra tap padding so the icon still aligns to the edge */
+  margin-left: calc(var(--space-sm) * -1);
   border: none;
   background: transparent;
   color: var(--text-primary);
-  font-size: 1.2rem;
+  font-size: 1.4rem;
+  line-height: 1;
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: background var(--transition-fast);
 }
 
-.menu-toggle:hover {
+.menu-toggle:hover,
+.menu-toggle:active {
   background: var(--bg-glass);
 }
 
@@ -1601,6 +2648,10 @@ tr:hover {
 
 @media (max-width: 1024px) {
   .mobile-header {
+    display: flex;
+  }
+
+  .sidebar-close {
     display: flex;
   }
 }
