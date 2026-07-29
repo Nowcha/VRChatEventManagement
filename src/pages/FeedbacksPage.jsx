@@ -3,6 +3,7 @@ import { collection, query, orderBy, getDocs, addDoc, updateDoc, doc, where, wri
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 
 export default function FeedbacksPage() {
     const { user } = useAuth()
@@ -12,6 +13,8 @@ export default function FeedbacksPage() {
     const [feedbacks, setFeedbacks] = useState([])
     const [allUsers, setAllUsers] = useState([])
     const [showModal, setShowModal] = useState(false)
+
+    useBodyScrollLock(showModal)
     const [editingFeedback, setEditingFeedback] = useState(null)
     const [statusFilter, setStatusFilter] = useState(location.state?.statusFilter || 'all') // 'all', 'unwritten', 'written', 'posted'
     const [castFilter, setCastFilter] = useState('all') // 'all' or cast.id
@@ -309,7 +312,7 @@ export default function FeedbacksPage() {
                 </div>
 
                 {/* フィルタ */}
-                <div className="flex gap-md" style={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div className="flex gap-md feedback-filter-bar" style={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div className="flex gap-sm items-center feedback-status-filter">
                         {/* ステータスフィルタ */}
                         <div className="flex gap-sm">
@@ -334,8 +337,7 @@ export default function FeedbacksPage() {
 
                         {/* 担当キャストフィルタ */}
                         <select
-                            className="form-select form-select-sm"
-                            style={{ width: 'auto', minWidth: '140px', marginLeft: '8px' }}
+                            className="form-select form-select-sm feedback-filter-select"
                             value={castFilter}
                             onChange={e => {
                                 setCastFilter(e.target.value)
@@ -349,7 +351,7 @@ export default function FeedbacksPage() {
                         </select>
 
                         {/* お客さまフィルタ（検索コンボボックス） */}
-                        <div style={{ position: 'relative', marginLeft: '8px' }}>
+                        <div className="feedback-customer-combo">
                             {customerFilter !== 'all' ? (
                                 <span style={{
                                     display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -367,8 +369,7 @@ export default function FeedbacksPage() {
                             ) : (
                                 <input
                                     type="text"
-                                    className="form-input"
-                                    style={{ width: '160px', fontSize: '0.85rem', padding: '4px 10px' }}
+                                    className="form-input feedback-customer-input"
                                     placeholder="お客さまで絞り込み..."
                                     value={customerFilterSearch}
                                     onChange={e => { setCustomerFilterSearch(e.target.value); setShowCustomerDropdown(true) }}
@@ -377,12 +378,7 @@ export default function FeedbacksPage() {
                                 />
                             )}
                             {showCustomerDropdown && customerFilter === 'all' && (
-                                <div style={{
-                                    position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 50,
-                                    background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)',
-                                    borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-                                    maxHeight: '200px', overflowY: 'auto', minWidth: '180px'
-                                }}>
+                                <div className="feedback-customer-dropdown">
                                     {customers
                                         .filter(c => c.vrchatName.toLowerCase().includes(customerFilterSearch.toLowerCase()))
                                         .map(c => (
@@ -408,11 +404,10 @@ export default function FeedbacksPage() {
                     </div>
 
                     {selectedFeedbackIds.length > 0 && (
-                        <div className="flex gap-sm items-center">
+                        <div className="flex gap-sm items-center feedback-bulk-bar">
                             <span className="text-sm text-muted">{selectedFeedbackIds.length}件選択中:</span>
                             <select
-                                className="form-select"
-                                style={{ width: 'auto', minWidth: '150px' }}
+                                className="form-select feedback-bulk-select"
                                 onChange={e => {
                                     if (e.target.value) {
                                         handleBulkStatusChange(e.target.value)

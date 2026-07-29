@@ -115,13 +115,13 @@ export default function SettingsPage() {
                 <p className="text-sm text-muted mb-md">
                     以下のURLを共有すると、新しいメンバーがシステムに参加できます。
                 </p>
-                <div className="flex gap-md items-center">
+                <div className="flex gap-md items-center invite-url-row">
                     <input
                         type="text"
                         className="form-input"
                         value={inviteUrl}
                         readOnly
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, minWidth: 0 }}
                     />
                     <button className="btn btn-secondary" onClick={copyInviteUrl}>
                         コピー
