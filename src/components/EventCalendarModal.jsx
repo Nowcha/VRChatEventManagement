@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 
 const WEEKDAYS = [
     { value: 0, label: '日' },
@@ -107,6 +108,8 @@ const emptyForm = () => ({
 })
 
 export default function EventCalendarModal({ initialData, onSave, onCancel }) {
+    useBodyScrollLock(true)
+
     const [form, setForm] = useState(() => {
         if (!initialData) return emptyForm()
         return {
@@ -199,7 +202,7 @@ export default function EventCalendarModal({ initialData, onSave, onCancel }) {
 
     return (
         <div className="modal-overlay" onClick={onCancel}>
-            <div className="modal" style={{ maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div className="modal" style={{ maxWidth: '520px' }} onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <h2 className="modal-title">{isEditing ? 'イベント編集' : 'イベント登録'}</h2>
                     <button className="modal-close" onClick={onCancel}>✕</button>
@@ -222,7 +225,7 @@ export default function EventCalendarModal({ initialData, onSave, onCancel }) {
                         </div>
 
                         {/* 開始・終了日時 */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div className="event-datetime-grid">
                             <div className="form-group">
                                 <label className="form-label">開始日時 <span style={{ color: 'var(--accent-pink)' }}>*</span></label>
                                 <DateTimePicker value={form.startAt} onChange={v => setField('startAt', v)} />
@@ -375,7 +378,7 @@ export default function EventCalendarModal({ initialData, onSave, onCancel }) {
                                                 { value: 'on', label: '日付指定' },
                                                 { value: 'after', label: '回数指定' },
                                             ].map(opt => (
-                                                <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                                <label key={opt.value} className="recurring-end-option" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                                     <input
                                                         type="radio"
                                                         name="endType"
@@ -387,7 +390,7 @@ export default function EventCalendarModal({ initialData, onSave, onCancel }) {
                                                     <span style={{ fontSize: '14px' }}>{opt.label}</span>
                                                     {opt.value === 'on' && form.recurringRule.endType === 'on' && (
                                                         <input
-                                                            className="form-input"
+                                                            className="form-input recurring-end-date"
                                                             type="date"
                                                             value={form.recurringRule.endDate}
                                                             onChange={e => setRuleField('endDate', e.target.value)}
@@ -395,7 +398,7 @@ export default function EventCalendarModal({ initialData, onSave, onCancel }) {
                                                         />
                                                     )}
                                                     {opt.value === 'after' && form.recurringRule.endType === 'after' && (
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px' }}>
+                                                        <div className="recurring-end-count" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px' }}>
                                                             <input
                                                                 className="form-input"
                                                                 type="number"
