@@ -17,6 +17,7 @@ VRChat イベントの管理アプリ。React + Vite + Firebase。
 
 - Security Rules はこのリポジトリに無く、Firebase Console 側で管理されている
 - したがってルールの妥当性がこのアプリの唯一のアクセス制御になる
+- **2026-08-30 に内容確認済み(問題なし)。** 再点検は Console 側で行う
 - 新しい秘匿値(サーバ側 API キー等)を `VITE_` 変数として追加してはいけない
 
 `.env.example` に変数名の雛形がある。
