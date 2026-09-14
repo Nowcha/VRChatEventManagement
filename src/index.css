@@ -915,7 +915,7 @@ tr:hover {
   background: var(--bg-glass);
 }
 
-/* CustomersPage / FeedbacksPage wrap body+footer in a <form>. Without this
+/* CustomersPage / VisitsPage wrap body+footer in a <form>. Without this
    the form would break the flex chain and .modal's overflow:hidden would
    clip the (now unscrollable) body. */
 .modal > form {
@@ -1522,15 +1522,15 @@ tr:hover {
   max-height: max(320px, calc(100dvh - 260px));
 }
 
-/* ---------- FeedbacksPage Card Layout ---------- */
-.feedback-card {
+/* ---------- VisitsPage / FeedbackArchivePage Card Layout ---------- */
+.record-card {
   display: flex;
   align-items: center;
   padding: 24px;
   gap: 32px;
 }
 
-.feedback-card-body {
+.record-card-body {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1538,19 +1538,19 @@ tr:hover {
   cursor: pointer;
 }
 
-.feedback-card-columns {
+.record-card-columns {
   display: flex;
   align-items: flex-start;
 }
 
-.feedback-card-meta {
+.record-card-meta {
   flex: 0 0 320px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.feedback-card-content {
+.record-card-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1558,25 +1558,25 @@ tr:hover {
   padding-right: 24px;
 }
 
-/* FeedbacksPage: フィルタ行 */
-.feedback-filter-select {
+/* 接客記録 / アーカイブ: フィルタ行 */
+.record-filter-select {
   width: auto;
   min-width: 140px;
   margin-left: 8px;
 }
 
-.feedback-customer-combo {
+.record-customer-combo {
   position: relative;
   margin-left: 8px;
 }
 
-.feedback-customer-input {
+.record-customer-input {
   width: 160px;
   font-size: 0.85rem;
   padding: 4px 10px;
 }
 
-.feedback-customer-dropdown {
+.record-customer-dropdown {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -1591,7 +1591,7 @@ tr:hover {
   min-width: 180px;
 }
 
-.feedback-bulk-select {
+.record-bulk-select {
   width: auto;
   min-width: 150px;
 }
@@ -2210,12 +2210,12 @@ tr:hover {
     min-width: 0;
   }
 
-  /* ---- FeedbacksPage フィルター折り返し ---- */
-  .feedback-filter-bar {
+  /* ---- 接客記録 / アーカイブ フィルター折り返し ---- */
+  .record-filter-bar {
     gap: var(--space-sm);
   }
 
-  .feedback-status-filter {
+  .record-status-filter {
     flex-direction: column;
     align-items: stretch;
     flex-wrap: wrap;
@@ -2224,11 +2224,11 @@ tr:hover {
   }
 
   /* ステータスタブは4件を等幅で1行に収める */
-  .feedback-status-filter > .flex {
+  .record-status-filter > .flex {
     width: 100%;
   }
 
-  .feedback-status-filter > .flex > .btn {
+  .record-status-filter > .flex > .btn {
     flex: 1;
     min-width: 0;
     padding: var(--space-xs) var(--space-sm);
@@ -2236,76 +2236,76 @@ tr:hover {
   }
 
   /* 幅固定のフィルタ類をモバイルでは全幅に */
-  .feedback-filter-select,
-  .feedback-customer-combo,
-  .feedback-customer-input,
-  .feedback-bulk-select {
+  .record-filter-select,
+  .record-customer-combo,
+  .record-customer-input,
+  .record-bulk-select {
     width: 100%;
     min-width: 0;
     margin-left: 0;
   }
 
-  .feedback-customer-input {
+  .record-customer-input {
     /* 0.85rem のままだと iOS がフォーカス時にズームする */
     font-size: 16px;
     padding: var(--space-sm) var(--space-md);
   }
 
-  .feedback-customer-dropdown {
+  .record-customer-dropdown {
     right: 0;
     min-width: 0;
   }
 
-  .feedback-bulk-bar {
+  .record-bulk-bar {
     width: 100%;
     flex-wrap: wrap;
   }
 
-  /* ---- FeedbacksPage フィードバックカード ---- */
-  .feedback-card {
+  /* ---- 接客記録 / アーカイブ 記録カード ---- */
+  .record-card {
     flex-direction: row;
     align-items: flex-start;
     padding: var(--space-md);
     gap: var(--space-sm);
   }
 
-  .feedback-card-body {
+  .record-card-body {
     min-width: 0;
     gap: var(--space-sm);
   }
 
-  .feedback-card-columns {
+  .record-card-columns {
     flex-direction: column;
     gap: var(--space-sm);
   }
 
-  .feedback-card-meta {
+  .record-card-meta {
     flex: none;
     width: 100%;
     margin-right: 0;
     gap: var(--space-xs);
   }
 
-  .feedback-card-content {
+  .record-card-content {
     padding-right: 0;
     min-width: 0;
   }
 
   /* フィードバックカード内テキストのフォントサイズ縮小 */
-  .feedback-card-meta span,
-  .feedback-card-content span,
-  .feedback-card-content > div,
-  .feedback-card-body > div:first-child {
+  .record-card-meta span,
+  .record-card-content span,
+  .record-card-content > div,
+  .record-card-body > div:first-child {
     font-size: 0.875rem !important;
   }
 
   /* ラベル列の固定 100px を詰めて本文の幅を稼ぐ */
-  .feedback-card-meta > div > span:first-child {
+  .record-card-meta > div > span:first-child {
     width: 72px !important;
     flex-shrink: 0;
   }
 
-  .feedback-card-meta > div > span:nth-child(2) {
+  .record-card-meta > div > span:nth-child(2) {
     margin-right: var(--space-sm) !important;
   }
 

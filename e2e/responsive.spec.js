@@ -5,7 +5,8 @@ const ROUTES = [
     { path: '#/dashboard', name: 'ダッシュボード' },
     { path: '#/shifts', name: 'シフト管理' },
     { path: '#/customers', name: '顧客データベース' },
-    { path: '#/feedbacks', name: '感想・接客記録' },
+    { path: '#/visits', name: '接客記録' },
+    { path: '#/feedback-archive', name: '感想アーカイブ' },
     { path: '#/gallery', name: 'ギャラリー' },
     { path: '#/ideas', name: 'タイトルアイデア' },
     { path: '#/events', name: 'イベントカレンダー' },
@@ -26,7 +27,7 @@ const VIEWPORTS = [
 const OVERLAYS = [
     { path: '#/events', name: 'イベント登録モーダル', open: /新規登録/, wait: '.modal' },
     { path: '#/customers', name: '顧客登録モーダル', open: /顧客登録/, wait: '.modal' },
-    { path: '#/feedbacks', name: '感想入力モーダル', open: /感想入力/, wait: '.modal' },
+    { path: '#/visits', name: '接客記録モーダル', open: /接客記録を追加/, wait: '.modal' },
     { path: '#/dashboard', name: 'サイドバードロワー', open: null, wait: '.sidebar.open' },
 ]
 
