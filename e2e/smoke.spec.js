@@ -15,7 +15,8 @@ const CASES = [
     { path: '#/dashboard', title: 'ダッシュボード', mustSee: ['今後のイベント', '登録顧客数'] },
     { path: '#/shifts', title: 'シフト管理', mustSee: ['候補日提案', '出欠入力'] },
     { path: '#/customers', title: '顧客データベース', mustSee: ['ほしぞらさん', 'みかづき'] },
-    { path: '#/feedbacks', title: '感想・接客記録', mustSee: ['あかり', 'ほしぞらさん'] },
+    { path: '#/visits', title: '接客記録', mustSee: ['あかり', 'ほしぞらさん'] },
+    { path: '#/feedback-archive', title: '感想アーカイブ', mustSee: ['あかり', 'ほしぞらさん'] },
     { path: '#/gallery', title: 'ギャラリー', mustSee: ['イベント'] },
     { path: '#/ideas', title: 'イベントタイトル アイデア', mustSee: ['夏の夜の星空バーイベント'] },
     { path: '#/events', title: 'イベントカレンダー', mustSee: ['Join', 'ReqIn'] },
@@ -96,4 +97,49 @@ test('モーダルを開くと背面がスクロールしない', async ({ page 
 
     const released = await page.evaluate(() => getComputedStyle(document.body).position)
     expect(released, 'モーダルを閉じたら固定が解除されるはず').toBe('static')
+})
+
+/**
+ * The duplicate guard is the one rule the 接客記録 form enforces on its own, so
+ * both sides of it are pinned here: a same-slot re-entry is refused, and the
+ * other time slot on the same day is still allowed.
+ */
+test.describe('接客記録: 同じ来店の二重登録を防ぐ', () => {
+    /** Opens the form with 来店日 / 時間帯 / お客さま filled in. */
+    async function fillVisitForm(page, { date, timeSlot, customer }) {
+        await page.goto('#/visits')
+        await waitForPageReady(page)
+        await page.getByRole('button', { name: /接客記録を追加/ }).click()
+
+        const modal = page.locator('.modal')
+        await expect(modal).toBeVisible()
+
+        await modal.locator('#visit-date').fill(date)
+        await modal.getByLabel('時間帯').selectOption(timeSlot)
+        await modal.locator('label', { hasText: customer }).locator('input[type="checkbox"]').check()
+        return modal
+    }
+
+    test('同じ来店日・同じ時間帯・同じお客さまはエラーになる', async ({ page }) => {
+        // Matches fixture vs-1 (2026-07-30 21:00 / ほしぞらさん).
+        const modal = await fillVisitForm(page, {
+            date: '2026-07-30', timeSlot: '21:00', customer: 'ほしぞらさん'
+        })
+
+        await modal.getByRole('button', { name: '保存' }).click()
+
+        await expect(modal.locator('.form-error')).toContainText('既に登録されています')
+        await expect(modal, 'エラー時はモーダルを閉じない').toBeVisible()
+    })
+
+    test('同じ来店日でも時間帯が違えば登録できる', async ({ page }) => {
+        const modal = await fillVisitForm(page, {
+            date: '2026-07-30', timeSlot: '24:00', customer: 'ほしぞらさん'
+        })
+
+        await modal.getByRole('button', { name: '保存' }).click()
+
+        await expect(page.locator('.modal')).toHaveCount(0)
+        await expect(page.locator('.record-card')).toHaveCount(4)
+    })
 })

@@ -5,7 +5,8 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import ShiftsPage from './pages/ShiftsPage'
 import CustomersPage from './pages/CustomersPage'
-import FeedbacksPage from './pages/FeedbacksPage'
+import VisitsPage from './pages/VisitsPage'
+import FeedbackArchivePage from './pages/FeedbackArchivePage'
 import GalleryPage from './pages/GalleryPage'
 import SettingsPage from './pages/SettingsPage'
 import IdeasPage from './pages/IdeasPage'
@@ -70,7 +71,10 @@ function AppRoutes() {
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="shifts" element={<ShiftsPage />} />
                 <Route path="customers" element={<CustomersPage />} />
-                <Route path="feedbacks" element={<FeedbacksPage />} />
+                <Route path="visits" element={<VisitsPage />} />
+                <Route path="feedback-archive" element={<FeedbackArchivePage />} />
+                {/* Old bookmarks for the retired 感想 page. */}
+                <Route path="feedbacks" element={<Navigate to="/visits" replace />} />
                 <Route path="gallery" element={<GalleryPage />} />
                 <Route path="ideas" element={<IdeasPage />} />
                 <Route path="events" element={<EventCalendarPage />} />

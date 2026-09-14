@@ -11,11 +11,11 @@ export default function DashboardPage() {
         upcomingEvents: 0,
         schedulingEvents: 0,
         totalCustomers: 0,
-        pendingFeedbacks: 0,
+        monthlyVisits: 0,
         totalPhotos: 0
     })
     const [nextEvent, setNextEvent] = useState(null)
-    const [pendingByCast, setPendingByCast] = useState([])
+    const [visitsByCast, setVisitsByCast] = useState([])
     const [candidateUserStatus, setCandidateUserStatus] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -57,26 +57,29 @@ export default function DashboardPage() {
             // 顧客数
             const customersSnapshot = await getDocs(collection(db, 'customers'))
 
-            // 未入力の感想数
-            const feedbacksQuery = query(
-                collection(db, 'feedbacks'),
-                where('status', '==', 'unwritten')
+            // 今月の接客記録
+            const monthStart = new Date(now.toDate().getFullYear(), now.toDate().getMonth(), 1)
+            const nextMonthStart = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1)
+            const visitsQuery = query(
+                collection(db, 'visits'),
+                where('visitDate', '>=', Timestamp.fromDate(monthStart)),
+                where('visitDate', '<', Timestamp.fromDate(nextMonthStart))
             )
-            const feedbacksSnapshot = await getDocs(feedbacksQuery)
-            const unwrittenFeedbacks = feedbacksSnapshot.docs.map(d => d.data())
+            const visitsSnapshot = await getDocs(visitsQuery)
+            const monthlyVisits = visitsSnapshot.docs.map(d => d.data())
 
             // ユーザー（キャスト）取得
             const usersSnapshot = await getDocs(collection(db, 'users'))
             const users = usersSnapshot.docs.map(d => ({ id: d.id, ...d.data() }))
 
-            // 未入力感想の担当者別集計
+            // 今月の接客記録の担当者別集計
             const breakdown = users
                 .map(u => ({
                     name: u.displayName || '不明',
-                    count: unwrittenFeedbacks.filter(fb => fb.assignedCastId === u.id).length
+                    count: monthlyVisits.filter(v => v.assignedCastId === u.id).length
                 }))
                 .filter(item => item.count > 0)
-            setPendingByCast(breakdown)
+            setVisitsByCast(breakdown)
 
             // 候補日イベントのユーザーごとの回答状況
             const candidateEventIds = candidateEvents.map(d => d.id)
@@ -111,7 +114,7 @@ export default function DashboardPage() {
                 upcomingEvents: confirmedEvents.length,
                 schedulingEvents: candidateEvents.length,
                 totalCustomers: customersSnapshot.size,
-                pendingFeedbacks: feedbacksSnapshot.size,
+                monthlyVisits: visitsSnapshot.size,
                 totalPhotos: photosSnapshot.size
             })
 
@@ -230,7 +233,7 @@ export default function DashboardPage() {
                     <div className="stat-value">{stats.totalCustomers}</div>
                     <div className="stat-label">登録顧客数</div>
                 </div>
-                <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer' }} onClick={() => navigate('/feedbacks', { state: { statusFilter: 'unwritten' } })}>
+                <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer' }} onClick={() => navigate('/visits')}>
                     <div>
                         <div className="stat-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -238,19 +241,19 @@ export default function DashboardPage() {
                                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                             </svg>
                         </div>
-                        <div className="stat-value">{stats.pendingFeedbacks}</div>
-                        <div className="stat-label mb-md">未入力の感想</div>
+                        <div className="stat-value">{stats.monthlyVisits}</div>
+                        <div className="stat-label mb-md">今月の接客記録</div>
                     </div>
                     <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-light)' }}>
-                        {pendingByCast.length > 0 ? (
-                            pendingByCast.map(({ name, count }) => (
+                        {visitsByCast.length > 0 ? (
+                            visitsByCast.map(({ name, count }) => (
                                 <div key={name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', marginBottom: '4px' }}>
                                     <span style={{ color: 'var(--text-secondary)' }}>{name}</span>
                                     <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>{count}件</span>
                                 </div>
                             ))
                         ) : (
-                            <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>未入力なし</div>
+                            <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>記録なし</div>
                         )}
                     </div>
                 </div>

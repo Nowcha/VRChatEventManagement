@@ -32,19 +32,29 @@ export default function CustomersPage() {
             const q = query(collection(db, 'customers'), orderBy('vrchatName'))
             const snapshot = await getDocs(q)
 
+            // 来店回数は接客記録(visits)と、運用を終了した感想(feedbacks)の合算。
+            // アーカイブ分を切り捨てると過去の常連が新規客に見えてしまう。
+            const visitsSnap = await getDocs(collection(db, 'visits'))
+            const visits = visitsSnap.docs.map(d => d.data())
+
             const fbSnap = await getDocs(collection(db, 'feedbacks'))
             const feedbacks = fbSnap.docs.map(d => d.data())
 
+            const countFor = (rows, customerId) => rows.filter(row =>
+                (row.customerIds && row.customerIds.includes(customerId)) || row.customerId === customerId
+            ).length
+
             setCustomers(snapshot.docs.map(d => {
                 const data = d.data()
-                const visitCount = feedbacks.filter(fb =>
-                    (fb.customerIds && fb.customerIds.includes(d.id)) || fb.customerId === d.id
-                ).length
+                const visitRecordCount = countFor(visits, d.id)
+                const archivedCount = countFor(feedbacks, d.id)
                 return {
                     id: d.id,
                     ...data,
                     firstVisitDate: data.firstVisitDate?.toDate(),
-                    visitCount // 動的に計算した来店回数をセット
+                    visitRecordCount,
+                    archivedCount,
+                    visitCount: visitRecordCount + archivedCount // 動的に計算した来店回数をセット
                 }
             }))
         } catch (error) {
@@ -349,6 +359,10 @@ export default function CustomersPage() {
                                 <p className="text-sm text-muted">来店回数</p>
                                 <p style={{ fontSize: '1.5rem', fontFamily: 'var(--font-serif)' }}>
                                     {selectedCustomer.visitCount || 0}回
+                                </p>
+                                <p className="text-sm text-muted">
+                                    接客記録 {selectedCustomer.visitRecordCount || 0}回 ／
+                                    感想アーカイブ {selectedCustomer.archivedCount || 0}回
                                 </p>
                             </div>
                             <div className="mb-lg">

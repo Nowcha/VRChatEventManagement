@@ -62,6 +62,12 @@ export const feedbacks = [
     { id: 'fb-4', eventId: 'ev-7', customerIds: ['cus-1', 'cus-2', 'cus-3', 'cus-4'], assignedCastId: 'user-mio', status: 'unwritten', content: '', createdAt: at(-1, 23) },
 ]
 
+export const visits = [
+    { id: 'vs-1', visitDate: at(0, 0), timeSlot: '21:00', customerIds: ['cus-1', 'cus-2'], assignedCastId: TEST_UID, memo: '星座の話で盛り上がった。次回はプラネタリウムワールドの話題を振る。', createdAt: at(0, 23), createdBy: TEST_UID },
+    { id: 'vs-2', visitDate: at(0, 0), timeSlot: '24:00', customerIds: ['cus-3'], assignedCastId: 'user-yui', memo: '', createdAt: at(0, 26), createdBy: 'user-yui' },
+    { id: 'vs-3', visitDate: at(-2, 0), timeSlot: '21:00', customerIds: ['cus-1', 'cus-3', 'cus-4'], assignedCastId: 'user-long', memo: '英語話者のお客さまと同席。翻訳ツールの案内済み。', createdAt: at(-2, 23), createdBy: 'user-long' },
+]
+
 export const photos = [
     { id: 'ph-1', eventId: 'ev-1', imageUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="%23cfd8e3"/></svg>', uploadedAt: at(0, 23), uploadedBy: TEST_UID },
     { id: 'ph-2', eventId: 'ev-1', imageUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="%23e3cfd8"/></svg>', uploadedAt: at(0, 23), uploadedBy: TEST_UID },
@@ -91,6 +97,7 @@ export const collections = {
     shifts,
     customers,
     feedbacks,
+    visits,
     photos,
     ideas,
     externalEvents,
