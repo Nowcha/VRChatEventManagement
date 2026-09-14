@@ -1,4 +1,4 @@
-<!-- GENERATED from CLAUDE.md - do not edit directly. source-sha256: 8b69315364099b5552874829ca7a4c4a317068b6002faa96927e948544958aee -->
+<!-- GENERATED from CLAUDE.md - do not edit directly. source-sha256: ab40918633353f772d39c08aac5a599850d5147b3870a930f39554388f29ba32 -->
 # VRChatEventManagement
 
 VRChat イベントの管理アプリ。React + Vite + Firebase。
@@ -16,15 +16,36 @@ VRChat イベントの管理アプリ。React + Vite + Firebase。
 クライアントバンドルへ埋め込むため、設計上ブラウザから可視である。
 実際のアクセス制御は **Firebase Security Rules** が担う。
 
-- Security Rules はこのリポジトリに無く、Firebase Console 側で管理されている
-- したがってルールの妥当性がこのアプリの唯一のアクセス制御になる
-- **2026-08-30 に内容確認済み(問題なし)。** 再点検は Console 側で行う
+- ルールの妥当性がこのアプリの唯一のアクセス制御になる
 - 新しい秘匿値(サーバ側 API キー等)を `VITE_` 変数として追加してはいけない
 
 `.env.example` に変数名の雛形がある。
+
+## Security Rules
+
+**2026-09-15 から `firestore.rules` としてこのリポジトリで版管理する。**
+それ以前は Firebase Console 側だけで管理されていた(現行内容は Console から
+ダウンロードしたものが出発点)。
+
+- **正本はリポジトリの `firestore.rules`。** Console のエディタで直接編集すると
+  次回デプロイで失われる。変更は必ずこのファイル側へ
+- 全コレクションが `isAuth()`(認証済みユーザー)で read/write を許可する構成。
+  ロール分けはしていない
+- コレクションを新設したら、このファイルに `match` ブロックを追加してデプロイ
+  するまで読み書きが拒否される
+- `firestore.indexes.json` も同様に版管理。現時点で複合インデックスは無い
+
+デプロイ:
+```
+firebase deploy --only firestore:rules --project vrchateventmanagement
+```
+
+内容を変えずに Console の現行ルールを取り直したいときは `firebase init firestore`
+(対話式。既存ルールをダウンロードして上書き確認してくる)。
 
 ## 検証
 
 ```
 npm run build
+npx playwright test
 ```
