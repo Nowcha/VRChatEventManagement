@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 認証済みユーザーかどうか
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // 自分自身のドキュメントか
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // ユーザープロフィール
+    // 読み：認証済みユーザー全員（シフト管理で他ユーザー一覧が必要）
+    // 書き：自分のドキュメントのみ
+    match /users/{userId} {
+      allow read: if isAuth();
+      allow create: if isAuth() && isOwner(userId);
+      allow update: if isAuth() && isOwner(userId);
+      allow delete: if isAuth() && isOwner(userId);
+    }
+
+    // イベント（ShiftsPage / FeedbackArchivePage / GalleryPage が読み書き）
+    // 読み：認証済みユーザー全員
+    // 書き：認証済みユーザー全員
+    match /events/{eventId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // シフト
+    match /shifts/{shiftId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // 顧客情報（CustomersPage）
+    match /customers/{customerId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // 感想アーカイブ（FeedbackArchivePage が読み取り専用で参照）
+    // 運用は終了したが、来店回数の集計に使うため残している
+    match /feedbacks/{feedbackId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // 接客記録（VisitsPage）
+    match /visits/{visitId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // ギャラリー写真メタデータ（GalleryPage）
+    match /photos/{photoId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // アイデア（IdeasPage）
+    match /ideas/{ideaId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // 外部イベントカレンダー（EventCalendarPage）
+    match /externalEvents/{eventId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // 繰り返しイベントグループ（EventCalendarPage）
+    match /recurringGroups/{groupId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+  }
+}
