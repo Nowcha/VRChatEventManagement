@@ -1,4 +1,3 @@
-<!-- GENERATED from CLAUDE.md - do not edit directly. source-sha256: ab40918633353f772d39c08aac5a599850d5147b3870a930f39554388f29ba32 -->
 # VRChatEventManagement
 
 VRChat イベントの管理アプリ。React + Vite + Firebase。
